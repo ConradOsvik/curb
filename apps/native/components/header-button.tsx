@@ -1,11 +1,13 @@
 import FontAwesome from "@expo/vector-icons/FontAwesome";
-import { forwardRef } from "react";
+import type { Ref } from "react";
 import { Pressable } from "react-native";
 
-export const HeaderButton = forwardRef<
-  typeof Pressable,
-  { onPress?: () => void }
->(({ onPress }, ref) => (
+export const HeaderButton = ({
+  onPress,
+}: {
+  onPress?: () => void;
+  ref?: Ref<typeof Pressable | null>;
+}) => (
   <Pressable
     className="mr-2 rounded-lg bg-secondary/50 p-2 active:bg-secondary"
     onPress={onPress}
@@ -21,4 +23,4 @@ export const HeaderButton = forwardRef<
       />
     )}
   </Pressable>
-));
+);

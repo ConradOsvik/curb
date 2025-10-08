@@ -27,6 +27,17 @@
     "rules": {
       "suspicious": {
         "noConsole": "off"
+      },
+      "style": {
+        "noNestedTernary": "off",
+        "noMagicNumbers": "off",
+        "useBlockStatements": "off"
+      },
+      "performance": {
+        "noNamespaceImport": "off"
+      },
+      "nursery": {
+        "noShadow": "off"
       }
     }
   }
