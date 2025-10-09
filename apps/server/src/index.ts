@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { createContext } from "@curb/api/context";
-import { appRouter } from "@curb/api/routers/index";
+import { appRouter } from "@curb/api/routers";
 import { auth } from "@curb/auth";
 import { trpcServer } from "@hono/trpc-server";
 import { Hono } from "hono";
