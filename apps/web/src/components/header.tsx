@@ -1,5 +1,7 @@
 import { Link } from "@tanstack/react-router";
 
+import { SidebarTrigger } from "./ui/sidebar";
+
 export default function Header() {
   const links = [
     { to: "/", label: "Home" },
@@ -9,6 +11,7 @@ export default function Header() {
   return (
     <div>
       <div className="flex flex-row items-center justify-between px-2 py-1">
+        <SidebarTrigger />
         <nav className="flex gap-4 text-lg">
           {links.map(({ to, label }) => {
             return (

@@ -2,6 +2,7 @@ import type { ConvexQueryClient } from "@convex-dev/react-query";
 import type { QueryClient } from "@tanstack/react-query";
 
 import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import {
   HeadContent,
   Outlet,
@@ -12,6 +13,8 @@ import {
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { createServerFn } from "@tanstack/react-start";
 
+import { AppSidebar } from "@/components/sidebar/app-sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { authClient } from "@/lib/auth-client";
 import { getToken } from "@/lib/auth-server";
@@ -76,11 +79,17 @@ function RootDocument() {
           <HeadContent />
         </head>
         <body>
-          <div className="grid h-svh grid-rows-[auto_1fr]">
-            <Header />
-            <Outlet />
-          </div>
+          <SidebarProvider>
+            <AppSidebar />
+            <SidebarInset>
+              <div className="grid h-svh grid-rows-[auto_1fr]">
+                <Header />
+                <Outlet />
+              </div>
+            </SidebarInset>
+          </SidebarProvider>
           <Toaster richColors />
+          <ReactQueryDevtools />
           <TanStackRouterDevtools position="bottom-left" />
           <Scripts />
         </body>
