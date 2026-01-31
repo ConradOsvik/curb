@@ -1,94 +1,71 @@
-import { Ionicons } from "@expo/vector-icons";
-import { useQuery } from "@tanstack/react-query";
-import { Card, Chip, useThemeColor } from "heroui-native";
-import { Text, View, Pressable } from "react-native";
+import { api } from "@curb/backend/convex/_generated/api";
+import { useConvexAuth, useQuery } from "convex/react";
+import { Button, Chip, Divider, Spinner, Surface, useThemeColor } from "heroui-native";
+import { Text, View } from "react-native";
 
 import { Container } from "@/components/container";
 import { SignIn } from "@/components/sign-in";
 import { SignUp } from "@/components/sign-up";
 import { authClient } from "@/lib/auth-client";
-import { queryClient, trpc } from "@/utils/trpc";
 
 export default function Home() {
-  const healthCheck = useQuery(trpc.healthCheck.queryOptions());
-  const privateData = useQuery(trpc.privateData.queryOptions());
-  const isConnected = healthCheck?.data === "OK";
-  const isLoading = healthCheck?.isLoading;
-  const { data: session } = authClient.useSession();
-
-  const mutedColor = useThemeColor("muted");
+  const healthCheck = useQuery(api.healthCheck.get);
+  const { isAuthenticated } = useConvexAuth();
+  const user = useQuery(api.auth.getCurrentUser, isAuthenticated ? {} : "skip");
   const successColor = useThemeColor("success");
   const dangerColor = useThemeColor("danger");
-  const foregroundColor = useThemeColor("foreground");
+
+  const isConnected = healthCheck === "OK";
+  const isLoading = healthCheck === undefined;
 
   return (
-    <Container className="p-6">
-      <View className="py-4 mb-6">
-        <Text className="text-4xl font-bold text-foreground mb-2">BETTER T STACK</Text>
+    <Container className="p-4">
+      <View className="py-6 mb-4">
+        <Text className="text-3xl font-semibold text-foreground tracking-tight">
+          Better T Stack
+        </Text>
+        <Text className="text-muted text-sm mt-1">Full-stack TypeScript starter</Text>
       </View>
 
-      {session?.user ? (
-        <Card variant="secondary" className="mb-6 p-4">
-          <Text className="text-foreground text-base mb-2">
-            Welcome, <Text className="font-medium">{session.user.name}</Text>
-          </Text>
-          <Text className="text-muted text-sm mb-4">{session.user.email}</Text>
-          <Pressable
-            className="bg-danger py-3 px-4 rounded-lg self-start active:opacity-70"
-            onPress={() => {
-              authClient.signOut();
-              queryClient.invalidateQueries();
-            }}
-          >
-            <Text className="text-foreground font-medium">Sign Out</Text>
-          </Pressable>
-        </Card>
-      ) : null}
-
-      <Card variant="secondary" className="p-6">
-        <View className="flex-row items-center justify-between mb-4">
-          <Card.Title>System Status</Card.Title>
-          <Chip variant="secondary" color={isConnected ? "success" : "danger"} size="sm">
-            <Chip.Label>{isConnected ? "LIVE" : "OFFLINE"}</Chip.Label>
-          </Chip>
-        </View>
-
-        <Card className="p-4">
-          <View className="flex-row items-center">
-            <View
-              className={`w-3 h-3 rounded-full mr-3 ${isConnected ? "bg-success" : "bg-muted"}`}
-            />
+      {user ? (
+        <Surface variant="secondary" className="mb-4 p-4 rounded-lg">
+          <View className="flex-row items-center justify-between">
             <View className="flex-1">
-              <Text className="text-foreground font-medium mb-1">TRPC Backend</Text>
-              <Card.Description>
-                {isLoading
-                  ? "Checking connection..."
-                  : isConnected
-                    ? "Connected to API"
-                    : "API Disconnected"}
-              </Card.Description>
+              <Text className="text-foreground font-medium">{user.name}</Text>
+              <Text className="text-muted text-xs mt-0.5">{user.email}</Text>
             </View>
-            {isLoading && <Ionicons name="hourglass-outline" size={20} color={mutedColor} />}
-            {!isLoading && isConnected && (
-              <Ionicons name="checkmark-circle" size={20} color={successColor} />
-            )}
-            {!isLoading && !isConnected && (
-              <Ionicons name="close-circle" size={20} color={dangerColor} />
-            )}
+            <Button
+              variant="destructive"
+              size="sm"
+              onPress={() => {
+                authClient.signOut();
+              }}
+            >
+              Sign Out
+            </Button>
           </View>
-        </Card>
-      </Card>
-
-      <Card variant="secondary" className="mt-6 p-4">
-        <Card.Title className="mb-3">Private Data</Card.Title>
-        {privateData && <Card.Description>{privateData.data?.message}</Card.Description>}
-      </Card>
-
-      {!session?.user && (
-        <>
+        </Surface>
+      ) : null}
+      <Surface variant="secondary" className="p-4 rounded-lg">
+        <Text className="text-foreground font-medium mb-2">API Status</Text>
+        <View className="flex-row items-center gap-2">
+          <View
+            className={`w-2 h-2 rounded-full ${healthCheck === "OK" ? "bg-success" : "bg-danger"}`}
+          />
+          <Text className="text-muted text-xs">
+            {healthCheck === undefined
+              ? "Checking..."
+              : healthCheck === "OK"
+                ? "Connected to API"
+                : "API Disconnected"}
+          </Text>
+        </View>
+      </Surface>
+      {!user && (
+        <View className="mt-4 gap-4">
           <SignIn />
           <SignUp />
-        </>
+        </View>
       )}
     </Container>
   );

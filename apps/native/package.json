@@ -12,11 +12,18 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@better-auth/expo": "catalog:",
+    "@convex-dev/better-auth": "catalog:",
+    "@curb/backend": "workspace:*",
+    "@curb/env": "workspace:*",
     "@expo/metro-runtime": "~6.1.2",
     "@expo/vector-icons": "^15.0.3",
     "@gorhom/bottom-sheet": "^5",
     "@react-navigation/drawer": "^7.3.9",
     "@react-navigation/elements": "^2.8.1",
+    "better-auth": "catalog:",
+    "convex": "catalog:",
+    "dotenv": "catalog:",
     "expo": "^54.0.23",
     "expo-constants": "~18.0.10",
     "expo-font": "~14.0.9",
@@ -42,21 +49,12 @@
     "tailwind-variants": "^3.2.2",
     "tailwindcss": "^4.1.18",
     "uniwind": "^1.2.2",
-    "@trpc/tanstack-react-query": "catalog:",
-    "@trpc/client": "catalog:",
-    "@trpc/server": "catalog:",
-    "@tanstack/react-query": "catalog:",
-    "better-auth": "catalog:",
-    "@better-auth/expo": "catalog:",
-    "dotenv": "catalog:",
-    "zod": "catalog:",
-    "@curb/env": "workspace:*",
-    "@curb/api": "workspace:*"
+    "zod": "catalog:"
   },
   "devDependencies": {
+    "@curb/config": "workspace:*",
     "@types/node": "^24.10.0",
     "@types/react": "~19.1.0",
-    "typescript": "catalog:",
-    "@curb/config": "workspace:*"
+    "typescript": "catalog:"
   }
 }

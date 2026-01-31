@@ -3,7 +3,10 @@ import { z } from "zod";
 
 export const env = createEnv({
   clientPrefix: "VITE_",
-  client: {},
+  client: {
+    VITE_CONVEX_URL: z.url(),
+    VITE_CONVEX_SITE_URL: z.url(),
+  },
   runtimeEnv: (import.meta as any).env,
   emptyStringAsUndefined: true,
 });

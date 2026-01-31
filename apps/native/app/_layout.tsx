@@ -1,16 +1,22 @@
 import "@/global.css";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
+import { env } from "@curb/env/native";
+import { ConvexReactClient } from "convex/react";
 import { Stack } from "expo-router";
 import { HeroUINativeProvider } from "heroui-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 
 import { AppThemeProvider } from "@/contexts/app-theme-context";
-import { queryClient } from "@/utils/trpc";
+import { authClient } from "@/lib/auth-client";
 
 export const unstable_settings = {
   initialRouteName: "(drawer)",
 };
+
+const convex = new ConvexReactClient(env.EXPO_PUBLIC_CONVEX_URL, {
+  unsavedChangesWarning: false,
+});
 
 function StackLayout() {
   return (
@@ -23,7 +29,7 @@ function StackLayout() {
 
 export default function Layout() {
   return (
-    <QueryClientProvider client={queryClient}>
+    <ConvexBetterAuthProvider client={convex} authClient={authClient}>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <KeyboardProvider>
           <AppThemeProvider>
@@ -33,6 +39,6 @@ export default function Layout() {
           </AppThemeProvider>
         </KeyboardProvider>
       </GestureHandlerRootView>
-    </QueryClientProvider>
+    </ConvexBetterAuthProvider>
   );
 }

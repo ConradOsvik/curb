@@ -1,6 +1,6 @@
 # curb
 
-This project was created with [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack), a modern TypeScript stack that combines React, TanStack Start, Self, TRPC, and more.
+This project was created with [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack), a modern TypeScript stack that combines React, TanStack Start, Convex, and more.
 
 ## Features
 
@@ -10,11 +10,9 @@ This project was created with [Better-T-Stack](https://github.com/AmanVarshney01
 - **Expo** - Tools for React Native development
 - **TailwindCSS** - Utility-first CSS for rapid UI development
 - **shadcn/ui** - Reusable UI components
-- **tRPC** - End-to-end type-safe APIs
-- **Drizzle** - TypeScript-first ORM
-- **SQLite/Turso** - Database engine
+- **Convex** - Reactive backend-as-a-service platform
 - **Authentication** - Better-Auth
-- **Biome** - Linting and formatting
+- **Oxlint** - Oxlint + Oxfmt (linting & formatting)
 - **Turborepo** - Optimized monorepo build system
 
 ## Getting Started
@@ -24,22 +22,18 @@ First, install the dependencies:
 ```bash
 pnpm install
 ```
-## Database Setup
 
-This project uses SQLite with Drizzle ORM.
+## Convex Setup
 
- 1. Start the local SQLite database (optional):
+This project uses Convex as a backend. You'll need to set up Convex before running the app:
+
 ```bash
-pnpm run db:local
+pnpm run dev:setup
 ```
 
-2. Update your `.env` file in the `apps/web` directory with the appropriate connection details if needed.
+Follow the prompts to create a new Convex project and connect it to your application.
 
-3. Apply the schema to your database:
-```bash
-pnpm run db:push
-```
-
+Copy environment variables from `packages/backend/.env.local` to `apps/*/.env`.
 
 Then, run the development server:
 
@@ -47,35 +41,31 @@ Then, run the development server:
 pnpm run dev
 ```
 
-Open [http://localhost:3001](http://localhost:3001) in your browser to see your fullstack application.
+Open [http://localhost:3001](http://localhost:3001) in your browser to see the web application.
 Use the Expo Go app to run the mobile application.
+Your app will connect to the Convex cloud backend automatically.
 
+## Git Hooks and Formatting
 
-
-
-
-
+- Format and lint fix: `pnpm run check`
 
 ## Project Structure
 
 ```
 curb/
 ├── apps/
-│   └── web/         # Fullstack application (React + TanStack Start)
+│   ├── web/         # Frontend application (React + TanStack Start)
 │   ├── native/      # Mobile application (React Native, Expo)
 ├── packages/
-│   ├── api/         # API layer / business logic
-│   ├── auth/        # Authentication configuration & logic
-│   └── db/          # Database schema & queries
+│   ├── backend/     # Convex backend functions and schema
 ```
 
 ## Available Scripts
 
 - `pnpm run dev`: Start all applications in development mode
 - `pnpm run build`: Build all applications
+- `pnpm run dev:web`: Start only the web application
+- `pnpm run dev:setup`: Setup and configure your Convex project
 - `pnpm run check-types`: Check TypeScript types across all apps
 - `pnpm run dev:native`: Start the React Native/Expo development server
-- `pnpm run db:push`: Push schema changes to database
-- `pnpm run db:studio`: Open database studio UI
-- `pnpm run db:local`: Start the local SQLite database
-- `pnpm run check`: Run Biome formatting and linting
+- `pnpm run check`: Run Oxlint and Oxfmt

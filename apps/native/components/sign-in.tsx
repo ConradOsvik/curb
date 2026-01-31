@@ -3,15 +3,14 @@ import { useState } from "react";
 import { Text, View } from "react-native";
 
 import { authClient } from "@/lib/auth-client";
-import { queryClient } from "@/utils/trpc";
 
-function SignIn() {
+export function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleLogin() {
+  const handleLogin = async () => {
     setIsLoading(true);
     setError(null);
 
@@ -21,21 +20,20 @@ function SignIn() {
         password,
       },
       {
-        onError(error) {
+        onError: (error) => {
           setError(error.error?.message || "Failed to sign in");
           setIsLoading(false);
         },
-        onSuccess() {
+        onSuccess: () => {
           setEmail("");
           setPassword("");
-          queryClient.refetchQueries();
         },
-        onFinished() {
+        onFinished: () => {
           setIsLoading(false);
         },
       },
     );
-  }
+  };
 
   return (
     <Surface variant="secondary" className="p-4 rounded-lg">
@@ -74,5 +72,3 @@ function SignIn() {
     </Surface>
   );
 }
-
-export { SignIn };

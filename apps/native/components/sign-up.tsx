@@ -3,53 +3,6 @@ import { useState } from "react";
 import { Text, View } from "react-native";
 
 import { authClient } from "@/lib/auth-client";
-import { queryClient } from "@/utils/trpc";
-
-function signUpHandler({
-  name,
-  email,
-  password,
-  setError,
-  setIsLoading,
-  setName,
-  setEmail,
-  setPassword,
-}: {
-  name: string;
-  email: string;
-  password: string;
-  setError: (error: string | null) => void;
-  setIsLoading: (loading: boolean) => void;
-  setName: (name: string) => void;
-  setEmail: (email: string) => void;
-  setPassword: (password: string) => void;
-}) {
-  setIsLoading(true);
-  setError(null);
-
-  authClient.signUp.email(
-    {
-      name,
-      email,
-      password,
-    },
-    {
-      onError(error) {
-        setError(error.error?.message || "Failed to sign up");
-        setIsLoading(false);
-      },
-      onSuccess() {
-        setName("");
-        setEmail("");
-        setPassword("");
-        queryClient.refetchQueries();
-      },
-      onFinished() {
-        setIsLoading(false);
-      },
-    },
-  );
-}
 
 export function SignUp() {
   const [name, setName] = useState("");
@@ -58,18 +11,32 @@ export function SignUp() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  function handlePress() {
-    signUpHandler({
-      name,
-      email,
-      password,
-      setError,
-      setIsLoading,
-      setName,
-      setEmail,
-      setPassword,
-    });
-  }
+  const handleSignUp = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    await authClient.signUp.email(
+      {
+        name,
+        email,
+        password,
+      },
+      {
+        onError: (error) => {
+          setError(error.error?.message || "Failed to sign up");
+          setIsLoading(false);
+        },
+        onSuccess: () => {
+          setName("");
+          setEmail("");
+          setPassword("");
+        },
+        onFinished: () => {
+          setIsLoading(false);
+        },
+      },
+    );
+  };
 
   return (
     <Surface variant="secondary" className="p-4 rounded-lg">
@@ -106,7 +73,7 @@ export function SignUp() {
           />
         </TextField>
 
-        <Button onPress={handlePress} isDisabled={isLoading} className="mt-1">
+        <Button onPress={handleSignUp} isDisabled={isLoading} className="mt-1">
           {isLoading ? (
             <Spinner size="sm" color="default" />
           ) : (

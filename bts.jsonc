@@ -1,29 +1,31 @@
-// Better-T-Stack configuration file
-// safe to delete
+// Better-T-Stack
+//
+// Website: https://www.better-t-stack.dev/
+// Stack Builder: https://www.better-t-stack.dev/new
+// Analytics: https://www.better-t-stack.dev/analytics
+// Showcase: https://www.better-t-stack.dev/showcase
+// Sponsor: https://github.com/sponsors/AmanVarshney01
+//
+// Add new addons with: pnpm dlx create-better-t-stack add
+// This file is safe to delete
 
 {
   "$schema": "https://r2.better-t-stack.dev/schema.json",
-  "version": "3.12.6",
-  "createdAt": "2025-12-29T01:04:17.412Z",
-  "database": "sqlite",
-  "orm": "drizzle",
-  "backend": "self",
+  "version": "3.19.2",
+  "createdAt": "2026-01-31T12:42:46.511Z",
+  "reproducibleCommand": "pnpm create better-t-stack@latest . --frontend tanstack-start native-uniwind --backend convex --runtime none --database none --orm none --api none --auth better-auth --payments none --addons oxlint turborepo ultracite --examples none --db-setup none --web-deploy none --server-deploy none --git --package-manager pnpm --install",
+  "database": "none",
+  "orm": "none",
+  "backend": "convex",
   "runtime": "none",
-  "frontend": [
-    "tanstack-start",
-    "native-uniwind"
-  ],
-  "addons": [
-    "biome",
-    "turborepo",
-    "ultracite"
-  ],
+  "frontend": ["tanstack-start", "native-uniwind"],
+  "addons": ["oxlint", "turborepo", "ultracite"],
   "examples": [],
   "auth": "better-auth",
-  "payments": "polar",
+  "payments": "none",
   "packageManager": "pnpm",
-  "dbSetup": "turso",
-  "api": "trpc",
+  "dbSetup": "none",
+  "api": "none",
   "webDeploy": "none",
-  "serverDeploy": "none"
+  "serverDeploy": "none",
 }
