@@ -20,7 +20,7 @@ This project was created with [Better-T-Stack](https://github.com/AmanVarshney01
 First, install the dependencies:
 
 ```bash
-pnpm install
+bun install
 ```
 
 ## Convex Setup
@@ -28,7 +28,7 @@ pnpm install
 This project uses Convex as a backend. You'll need to set up Convex before running the app:
 
 ```bash
-pnpm run dev:setup
+bun run dev:setup
 ```
 
 Follow the prompts to create a new Convex project and connect it to your application.
@@ -38,7 +38,7 @@ Copy environment variables from `packages/backend/.env.local` to `apps/*/.env`.
 Then, run the development server:
 
 ```bash
-pnpm run dev
+bun run dev
 ```
 
 Open [http://localhost:3001](http://localhost:3001) in your browser to see the web application.
@@ -47,7 +47,7 @@ Your app will connect to the Convex cloud backend automatically.
 
 ## Git Hooks and Formatting
 
-- Format and lint fix: `pnpm run check`
+- Format and lint fix: `bun run check`
 
 ## Project Structure
 
@@ -62,10 +62,10 @@ curb/
 
 ## Available Scripts
 
-- `pnpm run dev`: Start all applications in development mode
-- `pnpm run build`: Build all applications
-- `pnpm run dev:web`: Start only the web application
-- `pnpm run dev:setup`: Setup and configure your Convex project
-- `pnpm run check-types`: Check TypeScript types across all apps
-- `pnpm run dev:native`: Start the React Native/Expo development server
-- `pnpm run check`: Run Oxlint and Oxfmt
+- `bun run dev`: Start all applications in development mode
+- `bun run build`: Build all applications
+- `bun run dev:web`: Start only the web application
+- `bun run dev:setup`: Setup and configure your Convex project
+- `bun run check-types`: Check TypeScript types across all apps
+- `bun run dev:native`: Start the React Native/Expo development server
+- `bun run check`: Run Oxlint and Oxfmt

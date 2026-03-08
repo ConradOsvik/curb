@@ -1,4 +1,9 @@
-import { defineSchema, defineTable } from "convex/server";
-import { v } from "convex/values";
+import { defineSchema } from "convex/server";
 
-export default defineSchema({});
+import { foldersTable } from "./folders/schema";
+import { receiptsTable } from "./receipts/schema";
+
+export default defineSchema({
+  folders: foldersTable,
+  receipts: receiptsTable,
+});

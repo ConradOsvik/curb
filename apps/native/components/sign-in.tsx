@@ -1,5 +1,5 @@
 import { Button, ErrorView, Spinner, Surface, TextField } from "heroui-native";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Text, View } from "react-native";
 
 import { authClient } from "@/lib/auth-client";
@@ -10,7 +10,7 @@ export function SignIn() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleLogin = async () => {
+  const handleLogin = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
@@ -20,20 +20,20 @@ export function SignIn() {
         password,
       },
       {
-        onError: (error) => {
-          setError(error.error?.message || "Failed to sign in");
+        onError: (err) => {
+          setError(err.error?.message || "Failed to sign in");
+          setIsLoading(false);
+        },
+        onFinished: () => {
           setIsLoading(false);
         },
         onSuccess: () => {
           setEmail("");
           setPassword("");
         },
-        onFinished: () => {
-          setIsLoading(false);
-        },
       }
     );
-  };
+  }, [email, password]);
 
   return (
     <Surface variant="secondary" className="p-4 rounded-lg">

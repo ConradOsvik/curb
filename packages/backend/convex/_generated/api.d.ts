@@ -9,9 +9,17 @@
  */
 
 import type * as auth from "../auth.js";
+import type * as folders_mutations from "../folders/mutations.js";
+import type * as folders_queries from "../folders/queries.js";
+import type * as folders_validators from "../folders/validators.js";
 import type * as healthCheck from "../healthCheck.js";
 import type * as http from "../http.js";
 import type * as privateData from "../privateData.js";
+import type * as receipts_actions from "../receipts/actions.js";
+import type * as receipts_mutations from "../receipts/mutations.js";
+import type * as receipts_queries from "../receipts/queries.js";
+import type * as receipts_validators from "../receipts/validators.js";
+import type * as storage_mutations from "../storage/mutations.js";
 
 import type {
   ApiFromModules,
@@ -21,9 +29,17 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  "folders/mutations": typeof folders_mutations;
+  "folders/queries": typeof folders_queries;
+  "folders/validators": typeof folders_validators;
   healthCheck: typeof healthCheck;
   http: typeof http;
   privateData: typeof privateData;
+  "receipts/actions": typeof receipts_actions;
+  "receipts/mutations": typeof receipts_mutations;
+  "receipts/queries": typeof receipts_queries;
+  "receipts/validators": typeof receipts_validators;
+  "storage/mutations": typeof storage_mutations;
 }>;
 
 /**

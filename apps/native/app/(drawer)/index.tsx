@@ -1,13 +1,7 @@
 import { api } from "@curb/backend/convex/_generated/api";
 import { useConvexAuth, useQuery } from "convex/react";
-import {
-  Button,
-  Chip,
-  Divider,
-  Spinner,
-  Surface,
-  useThemeColor,
-} from "heroui-native";
+import { Button, Surface } from "heroui-native";
+import { useCallback } from "react";
 import { Text, View } from "react-native";
 
 import { Container } from "@/components/container";
@@ -15,15 +9,21 @@ import { SignIn } from "@/components/sign-in";
 import { SignUp } from "@/components/sign-up";
 import { authClient } from "@/lib/auth-client";
 
+function getStatusText(healthCheck: string | undefined): string {
+  if (healthCheck === undefined) {
+    return "Checking...";
+  }
+  return healthCheck === "OK" ? "Connected to API" : "API Disconnected";
+}
+
 export default function Home() {
   const healthCheck = useQuery(api.healthCheck.get);
   const { isAuthenticated } = useConvexAuth();
   const user = useQuery(api.auth.getCurrentUser, isAuthenticated ? {} : "skip");
-  const successColor = useThemeColor("success");
-  const dangerColor = useThemeColor("danger");
 
-  const isConnected = healthCheck === "OK";
-  const isLoading = healthCheck === undefined;
+  const handleSignOut = useCallback(() => {
+    authClient.signOut();
+  }, []);
 
   return (
     <Container className="p-4">
@@ -43,13 +43,7 @@ export default function Home() {
               <Text className="text-foreground font-medium">{user.name}</Text>
               <Text className="text-muted text-xs mt-0.5">{user.email}</Text>
             </View>
-            <Button
-              variant="destructive"
-              size="sm"
-              onPress={() => {
-                authClient.signOut();
-              }}
-            >
+            <Button variant="destructive" size="sm" onPress={handleSignOut}>
               Sign Out
             </Button>
           </View>
@@ -62,11 +56,7 @@ export default function Home() {
             className={`w-2 h-2 rounded-full ${healthCheck === "OK" ? "bg-success" : "bg-danger"}`}
           />
           <Text className="text-muted text-xs">
-            {healthCheck === undefined
-              ? "Checking..."
-              : healthCheck === "OK"
-                ? "Connected to API"
-                : "API Disconnected"}
+            {getStatusText(healthCheck)}
           </Text>
         </View>
       </Surface>

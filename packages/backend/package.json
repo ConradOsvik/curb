@@ -9,8 +9,11 @@
     "dev:setup": "convex dev --configure --until-success"
   },
   "dependencies": {
+    "@ai-sdk/google": "^3.0.18",
     "@better-auth/expo": "catalog:",
+    "@better-auth/passkey": "catalog:",
     "@convex-dev/better-auth": "catalog:",
+    "ai": "^6.0.64",
     "better-auth": "catalog:",
     "convex": "catalog:",
     "dotenv": "catalog:",

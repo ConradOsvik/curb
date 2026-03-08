@@ -3,5 +3,15 @@
   "extends": [
     "./node_modules/ultracite/config/oxlint/core/.oxlintrc.json",
     "./node_modules/ultracite/config/oxlint/react/.oxlintrc.json"
-  ]
+  ],
+  "ignorePatterns": ["**/convex/_generated/**", "**/routeTree.gen.ts"],
+  "rules": {
+    "func-style": "off",
+    "@typescript-eslint/no-import-type-side-effects": "off",
+    "import/consistent-type-specifier-style": "off",
+    "react-perf/jsx-no-new-function-as-prop": "off",
+    "max-statements": "off",
+    "complexity": "off",
+    "no-empty-function": "off"
+  }
 }

@@ -4,6 +4,7 @@ import { authComponent, createAuth } from "./auth";
 
 const http = httpRouter();
 
+// oxlint-disable-next-line eslint-plugin-jest/require-hook
 authComponent.registerRoutes(http, createAuth);
 
 export default http;

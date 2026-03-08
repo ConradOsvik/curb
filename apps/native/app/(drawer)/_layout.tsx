@@ -16,25 +16,19 @@ function DrawerLayout() {
   return (
     <Drawer
       screenOptions={{
-        headerTintColor: themeColorForeground,
-        headerStyle: { backgroundColor: themeColorBackground },
-        headerTitleStyle: {
-          fontWeight: "600",
-          color: themeColorForeground,
-        },
-        headerRight: renderThemeToggle,
         drawerStyle: { backgroundColor: themeColorBackground },
+        headerRight: renderThemeToggle,
+        headerStyle: { backgroundColor: themeColorBackground },
+        headerTintColor: themeColorForeground,
+        headerTitleStyle: {
+          color: themeColorForeground,
+          fontWeight: "600",
+        },
       }}
     >
       <Drawer.Screen
         name="index"
         options={{
-          headerTitle: "Home",
-          drawerLabel: ({ color, focused }) => (
-            <Text style={{ color: focused ? color : themeColorForeground }}>
-              Home
-            </Text>
-          ),
           drawerIcon: ({ size, color, focused }) => (
             <Ionicons
               name="home-outline"
@@ -42,23 +36,28 @@ function DrawerLayout() {
               color={focused ? color : themeColorForeground}
             />
           ),
+          drawerLabel: ({ color, focused }) => (
+            <Text style={{ color: focused ? color : themeColorForeground }}>
+              Home
+            </Text>
+          ),
+          headerTitle: "Home",
         }}
       />
       <Drawer.Screen
         name="(tabs)"
         options={{
-          headerTitle: "Tabs",
-          drawerLabel: ({ color, focused }) => (
-            <Text style={{ color: focused ? color : themeColorForeground }}>
-              Tabs
-            </Text>
-          ),
           drawerIcon: ({ size, color, focused }) => (
             <MaterialIcons
               name="border-bottom"
               size={size}
               color={focused ? color : themeColorForeground}
             />
+          ),
+          drawerLabel: ({ color, focused }) => (
+            <Text style={{ color: focused ? color : themeColorForeground }}>
+              Tabs
+            </Text>
           ),
           headerRight: () => (
             <Link href="/modal" asChild>
@@ -71,6 +70,7 @@ function DrawerLayout() {
               </Pressable>
             </Link>
           ),
+          headerTitle: "Tabs",
         }}
       />
     </Drawer>
