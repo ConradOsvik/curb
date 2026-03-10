@@ -1,0 +1,30 @@
+{
+  "name": "@curb/db",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema/index.ts",
+    "./types": "./src/types.ts"
+  },
+  "scripts": {
+    "db:push": "drizzle-kit push",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@curb/env": "workspace:*",
+    "@libsql/client": "^0.14.0",
+    "dotenv": "catalog:",
+    "drizzle-orm": "^0.38.0",
+    "nanoid": "^5.1.0"
+  },
+  "devDependencies": {
+    "@curb/config": "workspace:*",
+    "@types/node": "^24.10.0",
+    "drizzle-kit": "^0.30.0",
+    "typescript": "catalog:"
+  }
+}

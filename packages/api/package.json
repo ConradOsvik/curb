@@ -1,0 +1,25 @@
+{
+  "name": "@curb/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@ai-sdk/google": "^3.0.18",
+    "@curb/db": "workspace:*",
+    "@curb/env": "workspace:*",
+    "@curb/storage": "workspace:*",
+    "@trpc/server": "^11.0.0",
+    "ai": "^6.0.64",
+    "drizzle-orm": "^0.38.0",
+    "nanoid": "^5.1.0",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@curb/config": "workspace:*",
+    "@types/node": "^24.10.0",
+    "typescript": "catalog:"
+  }
+}
