@@ -1,25 +1,57 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
+  "globalEnv": ["TURSO_DATABASE_URL", "TURSO_AUTH_TOKEN"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": ["dist/**"]
     },
+    "//#docker:up": {
+      "cache": false
+    },
+    "//#docker:down": {
+      "cache": false
+    },
+    "db:push": {
+      "dependsOn": ["//#docker:up"],
+      "cache": false
+    },
+    "db:generate": {
+      "cache": false
+    },
+    "db:migrate": {
+      "dependsOn": ["//#docker:up"],
+      "cache": false
+    },
+    "db:studio": {
+      "dependsOn": ["//#docker:up"],
+      "cache": false,
+      "persistent": true
+    },
+    "auth:generate": {
+      "cache": false
+    },
+    "dev": {
+      "dependsOn": ["@curb/db#db:push"],
+      "cache": false,
+      "persistent": true
+    },
+    "typecheck": {
+      "dependsOn": ["^typecheck"]
+    },
     "lint": {
       "dependsOn": ["^lint"]
     },
-    "check-types": {
-      "dependsOn": ["^check-types"]
+    "lint:fix": {
+      "cache": false
     },
-    "dev": {
-      "cache": false,
-      "persistent": true
+    "format": {
+      "cache": false
     },
-    "dev:setup": {
-      "cache": false,
-      "persistent": true
+    "format:check": {
+      "dependsOn": ["^format:check"]
     }
   }
 }

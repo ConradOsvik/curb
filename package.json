@@ -9,11 +9,20 @@
   "scripts": {
     "dev": "turbo dev",
     "build": "turbo build",
-    "check-types": "turbo check-types",
+    "typecheck": "turbo typecheck",
     "dev:native": "turbo -F native dev",
     "dev:web": "turbo -F web dev",
-    "dev:server": "turbo -F @curb/backend dev",
-    "dev:setup": "turbo -F @curb/backend dev:setup",
+    "db:push": "turbo -F @curb/db db:push",
+    "db:generate": "turbo -F @curb/db db:generate",
+    "db:migrate": "turbo -F @curb/db db:migrate",
+    "db:studio": "turbo -F @curb/db db:studio",
+    "auth:generate": "turbo -F @curb/auth auth:generate",
+    "docker:up": "docker compose -f infra/docker-compose.yml up -d",
+    "docker:down": "docker compose -f infra/docker-compose.yml down",
+    "lint": "turbo lint",
+    "lint:fix": "turbo lint:fix",
+    "format": "turbo format",
+    "format:check": "turbo format:check",
     "check": "ultracite check",
     "fix": "ultracite fix"
   },
@@ -34,9 +43,7 @@
   "catalog": {
     "@better-auth/expo": "1.4.9",
     "@better-auth/passkey": "1.4.9",
-    "@convex-dev/better-auth": "^0.10.9",
     "better-auth": "1.4.9",
-    "convex": "^1.31.2",
     "dotenv": "^17.2.2",
     "typescript": "^5",
     "zod": "^4.1.13"
