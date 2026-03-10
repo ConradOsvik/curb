@@ -1,5 +1,5 @@
 import { useDroppable } from "@dnd-kit/core";
-import { ArrowUp } from "lucide-react";
+import { ArrowUpIcon } from "@heroicons/react/24/solid";
 
 import { cn } from "@/lib/utils";
 
@@ -17,7 +17,6 @@ export function ParentDropRow({ onNavigate }: { onNavigate: () => void }) {
         "group flex h-10 cursor-default items-center gap-3 border-b px-4 text-sm text-muted-foreground transition-colors hover:bg-accent/50",
         isOver && "bg-accent/50 ring-1 ring-ring"
       )}
-      onClick={onNavigate}
       onDoubleClick={onNavigate}
       onKeyDown={(e) => {
         if (e.key === "Enter") {
@@ -25,7 +24,7 @@ export function ParentDropRow({ onNavigate }: { onNavigate: () => void }) {
         }
       }}
     >
-      <ArrowUp className="size-4 shrink-0" />
+      <ArrowUpIcon className="size-4 shrink-0" />
       <span className="flex-1 truncate font-medium">..</span>
       <span className="w-20 shrink-0">&mdash;</span>
       <span className="w-28 shrink-0">&mdash;</span>

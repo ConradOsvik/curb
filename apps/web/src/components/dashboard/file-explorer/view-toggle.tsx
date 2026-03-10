@@ -1,4 +1,4 @@
-import { LayoutGrid, List } from "lucide-react";
+import { ListBulletIcon, Squares2X2Icon } from "@heroicons/react/24/solid";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -21,7 +21,7 @@ export function ViewToggle({ view, onViewChange }: ViewToggleProps) {
         onClick={() => onViewChange("list")}
         aria-label="List view"
       >
-        <List className="size-4" />
+        <ListBulletIcon className="size-4" />
       </Button>
       <Button
         variant="ghost"
@@ -33,7 +33,7 @@ export function ViewToggle({ view, onViewChange }: ViewToggleProps) {
         onClick={() => onViewChange("grid")}
         aria-label="Grid view"
       >
-        <LayoutGrid className="size-4" />
+        <Squares2X2Icon className="size-4" />
       </Button>
     </div>
   );

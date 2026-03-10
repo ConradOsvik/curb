@@ -46,13 +46,15 @@ export function SelectionBox({
   onSelectionChange,
   disabled,
 }: SelectionBoxProps) {
-  const [isDragging, setIsDragging] = useState(false);
   const [box, setBox] = useState<BoxCoords | null>(null);
+  const isDraggingRef = useRef(false);
+  const boxRef = useRef<BoxCoords | null>(null);
   const isAdditiveRef = useRef(false);
+  const didDragSelectRef = useRef(false);
 
   const handleMouseDown = useCallback(
     (e: MouseEvent) => {
-      if (disabled) {
+      if (disabled || e.button !== 0) {
         return;
       }
 
@@ -61,7 +63,6 @@ export function SelectionBox({
         return;
       }
 
-      // Only start if clicking on empty space (the container itself)
       const target = e.target as HTMLElement;
 
       // Check if we clicked on an item or its descendants
@@ -88,20 +89,25 @@ export function SelectionBox({
       const startY = e.clientY - containerRect.top + container.scrollTop;
 
       isAdditiveRef.current = e.ctrlKey || e.metaKey;
-      setIsDragging(true);
-      setBox({
+      didDragSelectRef.current = false;
+
+      const coords: BoxCoords = {
         endX: startX,
         endY: startY,
         startX,
         startY,
-      });
+      };
+
+      isDraggingRef.current = true;
+      boxRef.current = coords;
+      setBox(coords);
     },
     [containerRef, itemRefs, disabled]
   );
 
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
-      if (!isDragging || !box) {
+      if (!isDraggingRef.current || !boxRef.current) {
         return;
       }
 
@@ -111,17 +117,41 @@ export function SelectionBox({
       }
 
       const containerRect = container.getBoundingClientRect();
-      const endX = e.clientX - containerRect.left + container.scrollLeft;
-      const endY = e.clientY - containerRect.top + container.scrollTop;
+      const endX = Math.max(
+        0,
+        Math.min(
+          e.clientX - containerRect.left + container.scrollLeft,
+          container.scrollWidth
+        )
+      );
+      const endY = Math.max(
+        0,
+        Math.min(
+          e.clientY - containerRect.top + container.scrollTop,
+          container.scrollHeight
+        )
+      );
 
-      setBox((prev) => (prev ? { ...prev, endX, endY } : null));
+      const { startX } = boxRef.current;
+      const { startY } = boxRef.current;
+
+      const newBox: BoxCoords = { endX, endY, startX, startY };
+      boxRef.current = newBox;
+      setBox(newBox);
+
+      // Check if we've moved enough to count as a drag selection (> 5px)
+      const dx = Math.abs(endX - startX);
+      const dy = Math.abs(endY - startY);
+      if (dx > 5 || dy > 5) {
+        didDragSelectRef.current = true;
+      }
 
       // Calculate which items intersect with the selection box
       const selectionRect = {
-        bottom: Math.max(box.startY, endY),
-        left: Math.min(box.startX, endX),
-        right: Math.max(box.startX, endX),
-        top: Math.min(box.startY, endY),
+        bottom: Math.max(startY, endY),
+        left: Math.min(startX, endX),
+        right: Math.max(startX, endX),
+        top: Math.min(startY, endY),
       };
 
       const intersectingIds: string[] = [];
@@ -142,12 +172,32 @@ export function SelectionBox({
 
       onSelectionChange(intersectingIds, isAdditiveRef.current);
     },
-    [isDragging, box, containerRef, itemRefs, onSelectionChange]
+    [containerRef, itemRefs, onSelectionChange]
   );
 
   const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
+    if (!isDraggingRef.current) {
+      return;
+    }
+
+    const wasDragSelect = didDragSelectRef.current;
+
+    isDraggingRef.current = false;
+    boxRef.current = null;
+    didDragSelectRef.current = false;
     setBox(null);
+
+    // After a rubber-band selection, prevent the background click from
+    // immediately clearing the selection by eating the next click event
+    if (wasDragSelect) {
+      document.addEventListener(
+        "click",
+        (e) => {
+          e.stopPropagation();
+        },
+        { capture: true, once: true }
+      );
+    }
   }, []);
 
   useEffect(() => {
@@ -167,13 +217,13 @@ export function SelectionBox({
     };
   }, [containerRef, handleMouseDown, handleMouseMove, handleMouseUp]);
 
-  if (!isDragging || !box) {
+  if (!box) {
     return null;
   }
 
   return (
     <div
-      className="pointer-events-none absolute z-10 border border-primary/50 bg-primary/10"
+      className="pointer-events-none absolute z-10 border border-blue-500/40 bg-blue-500/10"
       style={getBoxStyle(box)}
     />
   );

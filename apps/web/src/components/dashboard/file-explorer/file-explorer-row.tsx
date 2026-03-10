@@ -1,7 +1,9 @@
-import type { Doc } from "@curb/backend/convex/_generated/dataModel";
-import { Folder } from "lucide-react";
+import type { Folder, Receipt } from "@curb/db/types";
+import { FolderIcon } from "@heroicons/react/24/solid";
 
 import { cn } from "@/lib/utils";
+
+import { InlineEdit } from "./inline-edit";
 
 const folderColorMap: Record<string, string> = {
   blue: "text-blue-500",
@@ -31,16 +33,19 @@ function formatDate(dateString: string) {
 
 interface FolderRowProps {
   type: "folder";
-  item: Doc<"folders">;
+  item: Folder;
   isSelected: boolean;
   isDropTarget?: boolean;
+  isEditing?: boolean;
   onClick: (e: React.MouseEvent) => void;
   onDoubleClick: () => void;
+  onSaveEdit?: (name: string) => void;
+  onCancelEdit?: () => void;
 }
 
 interface ReceiptRowProps {
   type: "receipt";
-  item: Doc<"receipts">;
+  item: Receipt;
   isSelected: boolean;
   onClick: (e: React.MouseEvent) => void;
   onDoubleClick: () => void;
@@ -55,16 +60,18 @@ export function FileExplorerRow(props: FileExplorerRowProps) {
     const folder = props.item;
     const colorClass = folder.color
       ? folderColorMap[folder.color]
-      : "text-muted-foreground";
+      : "text-blue-500";
 
     return (
       <div
         role="row"
         tabIndex={0}
         className={cn(
-          "group flex h-10 cursor-default items-center gap-3 border-b px-4 text-sm transition-colors hover:bg-accent/50",
-          isSelected && "bg-accent",
-          props.isDropTarget && "bg-accent/50 ring-1 ring-ring"
+          "group flex h-10 cursor-default items-center gap-3 border-b px-4 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500",
+          isSelected
+            ? "bg-blue-500/10 ring-2 ring-inset ring-blue-500/60 hover:bg-blue-500/15"
+            : "hover:bg-accent/50",
+          props.isDropTarget && "bg-blue-500/20 ring-2 ring-inset ring-blue-500"
         )}
         onClick={onClick}
         onDoubleClick={onDoubleClick}
@@ -74,8 +81,17 @@ export function FileExplorerRow(props: FileExplorerRowProps) {
           }
         }}
       >
-        <Folder className={cn("size-4 shrink-0", colorClass)} />
-        <span className="flex-1 truncate font-medium">{folder.name}</span>
+        <FolderIcon className={cn("size-4 shrink-0", colorClass)} />
+        {props.isEditing ? (
+          <InlineEdit
+            defaultValue={folder.name}
+            onSave={(name) => props.onSaveEdit?.(name)}
+            onCancel={() => props.onCancelEdit?.()}
+            className="flex-1 text-sm"
+          />
+        ) : (
+          <span className="flex-1 truncate font-medium">{folder.name}</span>
+        )}
         <span className="w-20 shrink-0 text-muted-foreground">Folder</span>
         <span className="w-28 shrink-0 text-muted-foreground">&mdash;</span>
         <span className="w-24 shrink-0 text-right text-muted-foreground">
@@ -91,8 +107,10 @@ export function FileExplorerRow(props: FileExplorerRowProps) {
       role="row"
       tabIndex={0}
       className={cn(
-        "group flex h-10 cursor-default items-center gap-3 border-b px-4 text-sm transition-colors hover:bg-accent/50",
-        isSelected && "bg-accent"
+        "group flex h-10 cursor-default items-center gap-3 border-b px-4 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500",
+        isSelected
+          ? "bg-blue-500/10 ring-2 ring-inset ring-blue-500/60 hover:bg-blue-500/15"
+          : "hover:bg-accent/50"
       )}
       onClick={onClick}
       onDoubleClick={onDoubleClick}

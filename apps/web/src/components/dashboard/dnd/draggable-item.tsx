@@ -1,15 +1,11 @@
-import type { Doc } from "@curb/backend/convex/_generated/dataModel";
-import {
-  defaultAnimateLayoutChanges,
-  useSortable,
-  type AnimateLayoutChanges,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import type { Folder, Receipt } from "@curb/db/types";
+import { useDndContext, useDraggable } from "@dnd-kit/core";
+import { motion } from "motion/react";
 import type { ReactNode } from "react";
 
 export interface DraggableData {
   type: "folder" | "receipt";
-  item: Doc<"folders"> | Doc<"receipts">;
+  item: Folder | Receipt;
 }
 
 interface DraggableItemProps {
@@ -20,50 +16,37 @@ interface DraggableItemProps {
   disabled?: boolean;
 }
 
-const animateLayoutChanges: AnimateLayoutChanges = (args) => {
-  const { isSorting, wasDragging } = args;
-  if (isSorting || wasDragging) {
-    return false;
-  }
-  return defaultAnimateLayoutChanges(args);
-};
-
 export function DraggableItem({
   id,
   data,
   children,
+  isSelected,
   disabled,
 }: DraggableItemProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({
-    animateLayoutChanges,
+  const { listeners, setNodeRef, isDragging } = useDraggable({
     data,
     disabled,
     id,
   });
+  const { active } = useDndContext();
 
-  const style = {
-    opacity: isDragging ? 0.5 : 1,
-    transform: isDragging ? undefined : CSS.Translate.toString(transform),
-    transition: isDragging ? undefined : transition,
-  };
+  // Shrink this item if it's being dragged, OR if it's selected
+  // and another selected item is being dragged (multi-drag)
+  const isPartOfDrag = isDragging || (isSelected && active !== null);
 
   return (
-    <div
+    <motion.div
       ref={setNodeRef}
-      style={style}
+      animate={{
+        opacity: isPartOfDrag ? 0.4 : 1,
+        scale: isPartOfDrag ? 0.95 : 1,
+      }}
+      transition={{ duration: 0.15 }}
       {...listeners}
-      {...attributes}
       data-dragging={isDragging}
-      className="touch-none"
+      className="h-full touch-none"
     >
       {children}
-    </div>
+    </motion.div>
   );
 }

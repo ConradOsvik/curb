@@ -1,13 +1,13 @@
-import type { Doc, Id } from "@curb/backend/convex/_generated/dataModel";
+import type { Folder } from "@curb/db/types";
 import {
-  Eye,
-  FolderInput,
-  Palette,
-  Pencil,
-  Trash2,
-  Home,
-  Folder,
-} from "lucide-react";
+  EyeIcon,
+  FolderArrowDownIcon,
+  FolderIcon,
+  HomeIcon,
+  PencilIcon,
+  SwatchIcon,
+  TrashIcon,
+} from "@heroicons/react/24/solid";
 import type { ReactNode } from "react";
 
 import {
@@ -35,21 +35,21 @@ const folderColors = [
 interface FolderContextMenuProps {
   type: "folder";
   children: ReactNode;
-  folders: Doc<"folders">[];
-  currentFolderId?: Id<"folders">;
+  folders: Folder[];
+  currentFolderId?: string;
   onRename: () => void;
   onChangeColor: (color: string) => void;
-  onMove: (folderId?: Id<"folders">) => void;
+  onMove: (folderId?: string) => void;
   onDelete: () => void;
 }
 
 interface ReceiptContextMenuProps {
   type: "receipt";
   children: ReactNode;
-  folders: Doc<"folders">[];
-  currentFolderId?: Id<"folders">;
+  folders: Folder[];
+  currentFolderId?: string;
   onViewDetails: () => void;
-  onMove: (folderId?: Id<"folders">) => void;
+  onMove: (folderId?: string) => void;
   onDelete: () => void;
 }
 
@@ -58,16 +58,16 @@ type ItemContextMenuProps = FolderContextMenuProps | ReceiptContextMenuProps;
 export function ItemContextMenu(props: ItemContextMenuProps) {
   const { type, children, folders, currentFolderId, onMove, onDelete } = props;
 
-  const availableFolders = folders.filter((f) => f._id !== currentFolderId);
+  const availableFolders = folders.filter((f) => f.id !== currentFolderId);
 
   return (
     <ContextMenu>
-      <ContextMenuTrigger>{children}</ContextMenuTrigger>
+      <ContextMenuTrigger className="block h-full">{children}</ContextMenuTrigger>
       <ContextMenuContent className="w-48">
         {type === "receipt" && (
           <>
             <ContextMenuItem onClick={props.onViewDetails} className="gap-2">
-              <Eye className="size-4" />
+              <EyeIcon className="size-4" />
               View Details
             </ContextMenuItem>
             <ContextMenuSeparator />
@@ -77,12 +77,12 @@ export function ItemContextMenu(props: ItemContextMenuProps) {
         {type === "folder" && (
           <>
             <ContextMenuItem onClick={props.onRename} className="gap-2">
-              <Pencil className="size-4" />
+              <PencilIcon className="size-4" />
               Rename
             </ContextMenuItem>
             <ContextMenuSub>
               <ContextMenuSubTrigger className="gap-2">
-                <Palette className="size-4" />
+                <SwatchIcon className="size-4" />
                 Change Color
               </ContextMenuSubTrigger>
               <ContextMenuSubContent>
@@ -104,13 +104,13 @@ export function ItemContextMenu(props: ItemContextMenuProps) {
 
         <ContextMenuSub>
           <ContextMenuSubTrigger className="gap-2">
-            <FolderInput className="size-4" />
+            <FolderArrowDownIcon className="size-4" />
             Move to
           </ContextMenuSubTrigger>
           <ContextMenuSubContent>
             {currentFolderId && (
               <ContextMenuItem onClick={() => onMove()} className="gap-2">
-                <Home className="size-4" />
+                <HomeIcon className="size-4" />
                 Home (Root)
               </ContextMenuItem>
             )}
@@ -119,11 +119,11 @@ export function ItemContextMenu(props: ItemContextMenuProps) {
             )}
             {availableFolders.map((folder) => (
               <ContextMenuItem
-                key={folder._id}
-                onClick={() => onMove(folder._id)}
+                key={folder.id}
+                onClick={() => onMove(folder.id)}
                 className="gap-2"
               >
-                <Folder className="size-4" />
+                <FolderIcon className="size-4" />
                 {folder.name}
               </ContextMenuItem>
             ))}
@@ -142,7 +142,7 @@ export function ItemContextMenu(props: ItemContextMenuProps) {
           variant="destructive"
           className="gap-2"
         >
-          <Trash2 className="size-4" />
+          <TrashIcon className="size-4" />
           Delete
         </ContextMenuItem>
       </ContextMenuContent>

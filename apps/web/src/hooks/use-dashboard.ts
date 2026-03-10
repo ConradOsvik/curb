@@ -1,37 +1,38 @@
-import {
-  convexQuery,
-  useConvexAction,
-  useConvexMutation,
-} from "@convex-dev/react-query";
-import { api } from "@curb/backend/convex/_generated/api";
-import type { Doc, Id } from "@curb/backend/convex/_generated/dataModel";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import type { FolderColor } from "@curb/api";
+import type { Folder, Receipt } from "@curb/db/types";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
-type FolderColor =
-  | "blue"
-  | "gray"
-  | "green"
-  | "orange"
-  | "pink"
-  | "purple"
-  | "red"
-  | "yellow";
+import { useTRPC } from "@/lib/trpc";
 
 export type ExplorerItem =
-  | { type: "folder"; item: Doc<"folders"> }
-  | { type: "receipt"; item: Doc<"receipts"> };
+  | { type: "folder"; item: Folder }
+  | { type: "receipt"; item: Receipt };
 
-function getItemOrder(item: ExplorerItem): number {
-  return item.item.order ?? item.item._creationTime;
+function getItemName(item: ExplorerItem): string {
+  if (item.type === "folder") {
+    return item.item.name;
+  }
+  return item.item.merchantName;
 }
 
 export function sortItems(items: ExplorerItem[]): ExplorerItem[] {
-  return [...items].toSorted(
-    (a: ExplorerItem, b: ExplorerItem) => getItemOrder(a) - getItemOrder(b)
-  );
+  return [...items].toSorted((a: ExplorerItem, b: ExplorerItem) => {
+    // Folders first, then receipts
+    if (a.type !== b.type) {
+      return a.type === "folder" ? -1 : 1;
+    }
+    // Folders: alphabetically by name
+    if (a.type === "folder") {
+      return getItemName(a).localeCompare(getItemName(b));
+    }
+    // Receipts: newest date first
+    const dateA = (a.item as Receipt).date;
+    const dateB = (b.item as Receipt).date;
+    return dateB.localeCompare(dateA);
+  });
 }
 
 export function useDashboardState() {
@@ -39,10 +40,10 @@ export function useDashboardState() {
     folder?: string;
   };
   const navigate = useNavigate();
-  const currentFolderId = search.folder as Id<"folders"> | undefined;
+  const currentFolderId = search.folder;
 
   const setCurrentFolderId = useCallback(
-    (folderId?: Id<"folders">) => {
+    (folderId?: string) => {
       navigate({
         search: { folder: folderId },
         to: "/dashboard",
@@ -51,9 +52,7 @@ export function useDashboardState() {
     [navigate]
   );
 
-  const [viewingReceipt, setViewingReceipt] = useState<Doc<"receipts"> | null>(
-    null
-  );
+  const [viewingReceipt, setViewingReceipt] = useState<Receipt | null>(null);
 
   return {
     currentFolderId,
@@ -63,23 +62,23 @@ export function useDashboardState() {
   };
 }
 
-export function useDashboardQueries(
-  currentFolderId: Id<"folders"> | undefined
-) {
+export function useDashboardQueries(currentFolderId: string | undefined) {
+  const trpc = useTRPC();
+
   const { data: folders = [] } = useQuery(
-    convexQuery(api.folders.queries.listByParent, { parentId: currentFolderId })
+    trpc.folders.listByParent.queryOptions({ parentId: currentFolderId })
   );
 
   const { data: allFolders = [] } = useQuery(
-    convexQuery(api.folders.queries.listAll, {})
+    trpc.folders.listAll.queryOptions()
   );
 
   const { data: path = [] } = useQuery(
-    convexQuery(api.folders.queries.getPath, { folderId: currentFolderId })
+    trpc.folders.getPath.queryOptions({ folderId: currentFolderId })
   );
 
   const { data: receipts = [] } = useQuery(
-    convexQuery(api.receipts.queries.listWithFilters, {
+    trpc.receipts.listWithFilters.queryOptions({
       folderId: currentFolderId,
     })
   );
@@ -93,41 +92,48 @@ export function useDashboardQueries(
 }
 
 export function useDashboardMutations() {
+  const trpc = useTRPC();
+
   return {
-    createFolder: useConvexMutation(api.folders.mutations.create),
-    deleteReceipt: useConvexMutation(api.receipts.mutations.deleteReceipt),
-    generateUploadUrl: useConvexMutation(
-      api.storage.mutations.generateUploadUrl
-    ),
-    moveFolder: useConvexMutation(api.folders.mutations.move),
-    moveReceipt: useConvexMutation(api.receipts.mutations.moveToFolder),
-    removeFolder: useConvexMutation(api.folders.mutations.remove),
-    reorderFolders: useConvexMutation(api.folders.mutations.reorder),
-    reorderReceipts: useConvexMutation(api.receipts.mutations.reorder),
-    scanReceipt: useConvexAction(api.receipts.actions.scan),
-    updateFolder: useConvexMutation(api.folders.mutations.update),
+    createFolder: useMutation(trpc.folders.create.mutationOptions()),
+    deleteReceipt: useMutation(trpc.receipts.delete.mutationOptions()),
+    moveFolder: useMutation(trpc.folders.move.mutationOptions()),
+    moveReceipt: useMutation(trpc.receipts.move.mutationOptions()),
+    removeFolder: useMutation(trpc.folders.remove.mutationOptions()),
+    scanReceipt: useMutation(trpc.receipts.scan.mutationOptions()),
+    updateFolder: useMutation(trpc.folders.update.mutationOptions()),
+    uploadUrl: useMutation(trpc.storage.getUploadUrl.mutationOptions()),
   };
 }
 
-function useFolderQueryKey(folderId: Id<"folders"> | undefined) {
-  return convexQuery(api.folders.queries.listByParent, {
-    parentId: folderId,
-  }).queryKey;
-}
+/**
+ * Invalidate all folder and receipt queries so the UI stays in sync
+ * after any mutation. This runs in the background — optimistic updates
+ * keep the current view responsive.
+ *
+ * Uses path-prefix matching: [["folders"]] matches all folder queries
+ * regardless of procedure or input.
+ */
+function useInvalidateAll() {
+  const queryClient = useQueryClient();
 
-function useReceiptQueryKey(folderId: Id<"folders"> | undefined) {
-  return convexQuery(api.receipts.queries.listWithFilters, {
-    folderId,
-  }).queryKey;
+  return useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: [["folders"]] });
+    queryClient.invalidateQueries({ queryKey: [["receipts"]] });
+  }, [queryClient]);
 }
 
 export function useFolderActions(
   mutations: ReturnType<typeof useDashboardMutations>,
   state: ReturnType<typeof useDashboardState>
 ) {
+  const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const folderKey = useFolderQueryKey(state.currentFolderId);
-  const receiptKey = useReceiptQueryKey(state.currentFolderId);
+  const invalidateAll = useInvalidateAll();
+
+  const folderKey = trpc.folders.listByParent.queryOptions({
+    parentId: state.currentFolderId,
+  }).queryKey;
 
   const handleCreateFolder = useCallback(
     async (name: string) => {
@@ -135,167 +141,139 @@ export function useFolderActions(
         return;
       }
 
-      const tempId = `temp_${Date.now()}` as Id<"folders">;
+      const tempId = `temp_${Date.now()}`;
       const now = Date.now();
-      const optimisticFolder: Doc<"folders"> = {
-        _creationTime: now,
-        _id: tempId,
-        color: undefined,
+      const optimisticFolder: Folder = {
+        color: null,
         createdAt: now,
+        deletedAt: null,
+        id: tempId,
         name: name.trim(),
         order: now,
-        parentId: state.currentFolderId,
+        parentId: state.currentFolderId ?? "",
         userId: "",
       };
 
-      queryClient.setQueryData(
-        folderKey,
-        (old: Doc<"folders">[] | undefined) => [
-          ...(old ?? []),
-          optimisticFolder,
-        ]
-      );
+      queryClient.setQueryData(folderKey, (old: Folder[] | undefined) => [
+        ...(old ?? []),
+        optimisticFolder,
+      ]);
 
       try {
-        await mutations.createFolder({
+        await mutations.createFolder.mutateAsync({
           name: name.trim(),
           parentId: state.currentFolderId,
         });
-        toast.success("Folder created");
+        invalidateAll();
       } catch {
-        queryClient.invalidateQueries({ queryKey: folderKey });
+        invalidateAll();
         toast.error("Failed to create folder");
       }
     },
-    [mutations, state.currentFolderId, queryClient, folderKey]
+    [mutations, state.currentFolderId, queryClient, folderKey, invalidateAll]
   );
 
   const handleRenameFolder = useCallback(
-    async (folderId: Id<"folders">, name: string) => {
+    async (folderId: string, name: string) => {
       if (!name.trim()) {
         return;
       }
 
-      queryClient.setQueryData(folderKey, (old: Doc<"folders">[] | undefined) =>
-        old?.map((f) => (f._id === folderId ? { ...f, name: name.trim() } : f))
+      queryClient.setQueryData(folderKey, (old: Folder[] | undefined) =>
+        old?.map((f) => (f.id === folderId ? { ...f, name: name.trim() } : f))
       );
 
       try {
-        await mutations.updateFolder({ id: folderId, name: name.trim() });
-        toast.success("Folder renamed");
+        await mutations.updateFolder.mutateAsync({
+          id: folderId,
+          name: name.trim(),
+        });
+        invalidateAll();
       } catch {
-        queryClient.invalidateQueries({ queryKey: folderKey });
+        invalidateAll();
         toast.error("Failed to rename folder");
       }
     },
-    [mutations, queryClient, folderKey]
+    [mutations, queryClient, folderKey, invalidateAll]
   );
 
   const handleChangeFolderColor = useCallback(
-    async (folderId: Id<"folders">, color: string) => {
-      queryClient.setQueryData(folderKey, (old: Doc<"folders">[] | undefined) =>
-        old?.map((f) => (f._id === folderId ? { ...f, color } : f))
+    async (folderId: string, color: string) => {
+      queryClient.setQueryData(folderKey, (old: Folder[] | undefined) =>
+        old?.map((f) => (f.id === folderId ? { ...f, color } : f))
       );
 
       try {
-        await mutations.updateFolder({
+        await mutations.updateFolder.mutateAsync({
           color: color as FolderColor,
           id: folderId,
         });
+        invalidateAll();
       } catch {
-        queryClient.invalidateQueries({ queryKey: folderKey });
+        invalidateAll();
         toast.error("Failed to change folder color");
       }
     },
-    [mutations, queryClient, folderKey]
+    [mutations, queryClient, folderKey, invalidateAll]
   );
 
   const handleMoveFolder = useCallback(
-    async (folderId: Id<"folders">, targetFolderId?: Id<"folders">) => {
-      queryClient.setQueryData(folderKey, (old: Doc<"folders">[] | undefined) =>
-        old?.filter((f) => f._id !== folderId)
+    async (folderId: string, targetFolderId?: string) => {
+      // Grab folder data before removing from cache
+      const currentFolders = queryClient.getQueryData<Folder[]>(folderKey);
+      const movedFolder =
+        currentFolders?.find((f) => f.id === folderId) ??
+        queryClient
+          .getQueryData<Folder[]>(trpc.folders.listAll.queryOptions().queryKey)
+          ?.find((f) => f.id === folderId);
+
+      // Optimistic: remove from current view
+      queryClient.setQueryData(folderKey, (old: Folder[] | undefined) =>
+        old?.filter((f) => f.id !== folderId)
       );
 
+      // Optimistic: add to target folder's cache if it exists
+      if (movedFolder) {
+        const targetKey = trpc.folders.listByParent.queryOptions({
+          parentId: targetFolderId,
+        }).queryKey;
+        queryClient.setQueryData(
+          targetKey,
+          (old: Folder[] | undefined) =>
+            old && [...old, { ...movedFolder, parentId: targetFolderId ?? "" }]
+        );
+      }
+
       try {
-        await mutations.moveFolder({ id: folderId, parentId: targetFolderId });
-        toast.success("Folder moved");
+        await mutations.moveFolder.mutateAsync({
+          id: folderId,
+          parentId: targetFolderId,
+        });
+        invalidateAll();
       } catch {
-        queryClient.invalidateQueries({ queryKey: folderKey });
+        invalidateAll();
         toast.error("Failed to move folder");
       }
     },
-    [mutations, queryClient, folderKey]
+    [mutations, queryClient, folderKey, trpc, invalidateAll]
   );
 
   const handleDeleteFolder = useCallback(
-    async (folderId: Id<"folders">) => {
-      queryClient.setQueryData(folderKey, (old: Doc<"folders">[] | undefined) =>
-        old?.filter((f) => f._id !== folderId)
+    async (folderId: string) => {
+      queryClient.setQueryData(folderKey, (old: Folder[] | undefined) =>
+        old?.filter((f) => f.id !== folderId)
       );
 
       try {
-        await mutations.removeFolder({ id: folderId });
-        toast.success("Folder deleted");
+        await mutations.removeFolder.mutateAsync({ id: folderId });
+        invalidateAll();
+        toast.success("Moved to trash");
       } catch {
-        queryClient.invalidateQueries({ queryKey: folderKey });
+        invalidateAll();
         toast.error("Failed to delete folder");
       }
     },
-    [mutations, queryClient, folderKey]
-  );
-
-  const handleReorder = useCallback(
-    async (items: ExplorerItem[]) => {
-      const folderUpdates: { id: Id<"folders">; order: number }[] = [];
-      const receiptUpdates: { id: Id<"receipts">; order: number }[] = [];
-
-      for (const [index, entry] of items.entries()) {
-        const order = index * 1000;
-        if (entry.type === "folder") {
-          folderUpdates.push({
-            id: entry.item._id as Id<"folders">,
-            order,
-          });
-        } else {
-          receiptUpdates.push({
-            id: entry.item._id as Id<"receipts">,
-            order,
-          });
-        }
-      }
-
-      // Optimistic update
-      queryClient.setQueryData(folderKey, (old: Doc<"folders">[] | undefined) =>
-        old?.map((f) => {
-          const update = folderUpdates.find((u) => u.id === f._id);
-          return update ? { ...f, order: update.order } : f;
-        })
-      );
-      queryClient.setQueryData(
-        receiptKey,
-        (old: Doc<"receipts">[] | undefined) =>
-          old?.map((r) => {
-            const update = receiptUpdates.find((u) => u.id === r._id);
-            return update ? { ...r, order: update.order } : r;
-          })
-      );
-
-      try {
-        const promises: Promise<unknown>[] = [];
-        if (folderUpdates.length > 0) {
-          promises.push(mutations.reorderFolders({ items: folderUpdates }));
-        }
-        if (receiptUpdates.length > 0) {
-          promises.push(mutations.reorderReceipts({ items: receiptUpdates }));
-        }
-        await Promise.all(promises);
-      } catch {
-        queryClient.invalidateQueries({ queryKey: folderKey });
-        queryClient.invalidateQueries({ queryKey: receiptKey });
-        toast.error("Failed to reorder");
-      }
-    },
-    [mutations, queryClient, folderKey, receiptKey]
+    [mutations, queryClient, folderKey, invalidateAll]
   );
 
   return {
@@ -304,56 +282,74 @@ export function useFolderActions(
     handleDeleteFolder,
     handleMoveFolder,
     handleRenameFolder,
-    handleReorder,
   };
 }
 
 export function useReceiptActions(
   mutations: ReturnType<typeof useDashboardMutations>,
-  currentFolderId?: Id<"folders">
+  currentFolderId?: string
 ) {
+  const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const receiptKey = useReceiptQueryKey(currentFolderId);
+  const invalidateAll = useInvalidateAll();
+
+  const receiptKey = trpc.receipts.listWithFilters.queryOptions({
+    folderId: currentFolderId,
+  }).queryKey;
 
   const handleMoveReceipt = useCallback(
-    async (receiptId: Id<"receipts">, targetFolderId?: Id<"folders">) => {
-      queryClient.setQueryData(
-        receiptKey,
-        (old: Doc<"receipts">[] | undefined) =>
-          old?.filter((r) => r._id !== receiptId)
+    async (receiptId: string, targetFolderId?: string) => {
+      // Optimistic: get the receipt before removing from cache
+      const receipts = queryClient.getQueryData<Receipt[]>(receiptKey);
+      const receipt = receipts?.find((r) => r.id === receiptId);
+
+      // Remove from current view
+      queryClient.setQueryData(receiptKey, (old: Receipt[] | undefined) =>
+        old?.filter((r) => r.id !== receiptId)
       );
 
+      // Add to target folder's cache if it exists
+      if (receipt) {
+        const targetKey = trpc.receipts.listWithFilters.queryOptions({
+          folderId: targetFolderId,
+        }).queryKey;
+        queryClient.setQueryData(
+          targetKey,
+          (old: Receipt[] | undefined) =>
+            old && [...old, { ...receipt, folderId: targetFolderId ?? "" }]
+        );
+      }
+
       try {
-        await mutations.moveReceipt({
+        await mutations.moveReceipt.mutateAsync({
           folderId: targetFolderId,
           id: receiptId,
         });
-        toast.success("Receipt moved");
+        invalidateAll();
       } catch {
-        queryClient.invalidateQueries({ queryKey: receiptKey });
+        invalidateAll();
         toast.error("Failed to move receipt");
       }
     },
-    [mutations, queryClient, receiptKey]
+    [mutations, queryClient, receiptKey, trpc, invalidateAll]
   );
 
   const handleDeleteReceipt = useCallback(
-    async (receiptId: Id<"receipts">) => {
-      queryClient.setQueryData(
-        receiptKey,
-        (old: Doc<"receipts">[] | undefined) =>
-          old?.filter((r) => r._id !== receiptId)
+    async (receiptId: string) => {
+      queryClient.setQueryData(receiptKey, (old: Receipt[] | undefined) =>
+        old?.filter((r) => r.id !== receiptId)
       );
 
       try {
-        await mutations.deleteReceipt({ id: receiptId });
-        toast.success("Receipt deleted");
+        await mutations.deleteReceipt.mutateAsync({ id: receiptId });
+        invalidateAll();
+        toast.success("Moved to trash");
       } catch {
-        queryClient.invalidateQueries({ queryKey: receiptKey });
+        invalidateAll();
         toast.error("Failed to delete receipt");
       }
     },
-    [mutations, queryClient, receiptKey]
+    [mutations, queryClient, receiptKey, invalidateAll]
   );
 
   return { handleDeleteReceipt, handleMoveReceipt };
@@ -361,9 +357,10 @@ export function useReceiptActions(
 
 export function useFileUpload(
   mutations: ReturnType<typeof useDashboardMutations>,
-  currentFolderId?: Id<"folders">
+  currentFolderId?: string
 ) {
   const [scanningCount, setScanningCount] = useState(0);
+  const invalidateAll = useInvalidateAll();
 
   const handleUpload = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -389,22 +386,26 @@ export function useFileUpload(
 
       try {
         for (const file of imageFiles) {
-          const uploadUrl = await mutations.generateUploadUrl();
-          const response = await fetch(uploadUrl, {
+          const { url, key } = await mutations.uploadUrl.mutateAsync({
+            contentType: file.type,
+          });
+
+          const response = await fetch(url, {
             body: file,
             headers: { "Content-Type": file.type },
-            method: "POST",
+            method: "PUT",
           });
 
           if (!response.ok) {
             throw new Error("Upload failed");
           }
 
-          const { storageId } = (await response.json()) as {
-            storageId: Id<"_storage">;
-          };
-          await mutations.scanReceipt({ folderId: currentFolderId, storageId });
+          await mutations.scanReceipt.mutateAsync({
+            folderId: currentFolderId,
+            storageKey: key,
+          });
           setScanningCount((c) => Math.max(0, c - 1));
+          invalidateAll();
         }
         toast.success(
           `Successfully scanned ${imageFiles.length} receipt${imageFiles.length > 1 ? "s" : ""}`,
@@ -413,11 +414,12 @@ export function useFileUpload(
       } catch {
         toast.error("Failed to scan receipt", { id: toastId });
         setScanningCount(0);
+        invalidateAll();
       }
 
       e.target.value = "";
     },
-    [currentFolderId, mutations]
+    [currentFolderId, mutations, invalidateAll]
   );
 
   return { handleUpload, scanningCount };

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 
 export interface SelectableItem {
   id: string;
@@ -105,33 +105,6 @@ export function useSelection({
     },
     []
   );
-
-  // Handle keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Ctrl/Cmd+A to select all
-      if ((event.ctrlKey || event.metaKey) && event.key === "a") {
-        // Only if not focused on an input
-        const target = event.target as HTMLElement;
-        if (
-          target.tagName !== "INPUT" &&
-          target.tagName !== "TEXTAREA" &&
-          !target.isContentEditable
-        ) {
-          event.preventDefault();
-          handleSelectAll();
-        }
-      }
-
-      // Escape to clear selection
-      if (event.key === "Escape") {
-        clearSelection();
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [handleSelectAll, clearSelection]);
 
   return {
     clearSelection,

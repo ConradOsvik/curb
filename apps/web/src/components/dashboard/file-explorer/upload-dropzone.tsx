@@ -1,13 +1,13 @@
-import { useConvexAction, useConvexMutation } from "@convex-dev/react-query";
-import { api } from "@curb/backend/convex/_generated/api";
-import type { Id } from "@curb/backend/convex/_generated/dataModel";
-import { Upload } from "lucide-react";
+import { ArrowUpTrayIcon } from "@heroicons/react/24/solid";
+import { useMutation } from "@tanstack/react-query";
 import { type ReactNode, useCallback, useState } from "react";
 import { toast } from "sonner";
 
+import { useTRPC } from "@/lib/trpc";
+
 interface UploadDropzoneProps {
   children: ReactNode;
-  currentFolderId?: Id<"folders">;
+  currentFolderId?: string;
   onUploadComplete?: () => void;
   className?: string;
 }
@@ -21,10 +21,9 @@ export function UploadDropzone({
   const [isDragOver, setIsDragOver] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
-  const generateUploadUrl = useConvexMutation(
-    api.storage.mutations.generateUploadUrl
-  );
-  const scanReceipt = useConvexAction(api.receipts.actions.scan);
+  const trpc = useTRPC();
+  const uploadUrl = useMutation(trpc.storage.getUploadUrl.mutationOptions());
+  const scanReceipt = useMutation(trpc.receipts.scan.mutationOptions());
 
   const handleUpload = useCallback(
     async (files: FileList) => {
@@ -44,25 +43,23 @@ export function UploadDropzone({
 
       try {
         for (const file of imageFiles) {
-          const uploadUrl = await generateUploadUrl();
+          const { url, key } = await uploadUrl.mutateAsync({
+            contentType: file.type,
+          });
 
-          const response = await fetch(uploadUrl, {
+          const response = await fetch(url, {
             body: file,
             headers: { "Content-Type": file.type },
-            method: "POST",
+            method: "PUT",
           });
 
           if (!response.ok) {
             throw new Error("Upload failed");
           }
 
-          const { storageId } = (await response.json()) as {
-            storageId: Id<"_storage">;
-          };
-
-          await scanReceipt({
+          await scanReceipt.mutateAsync({
             folderId: currentFolderId,
-            storageId,
+            storageKey: key,
           });
         }
 
@@ -77,7 +74,7 @@ export function UploadDropzone({
         setIsUploading(false);
       }
     },
-    [currentFolderId, generateUploadUrl, scanReceipt, onUploadComplete]
+    [currentFolderId, uploadUrl, scanReceipt, onUploadComplete]
   );
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -117,7 +114,7 @@ export function UploadDropzone({
 
       {isDragOver && (
         <div className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-4 rounded-lg border-2 border-dashed border-primary bg-primary/10 backdrop-blur-sm">
-          <Upload className="size-12 text-primary" />
+          <ArrowUpTrayIcon className="size-12 text-primary" />
           <p className="text-lg font-medium text-primary">
             Drop receipt images to scan
           </p>

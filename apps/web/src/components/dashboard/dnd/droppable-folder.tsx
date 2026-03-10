@@ -16,7 +16,7 @@ export function DroppableFolder({ id, children }: DroppableFolderProps) {
       {children(isOver)}
       <div
         ref={setNodeRef}
-        className="absolute inset-x-0 top-1/4 bottom-1/4 pointer-events-none"
+        className="absolute inset-0 pointer-events-none"
         aria-hidden
       />
     </div>

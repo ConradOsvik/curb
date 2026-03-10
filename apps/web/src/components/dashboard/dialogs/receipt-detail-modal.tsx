@@ -1,13 +1,13 @@
-import type { Doc, Id } from "@curb/backend/convex/_generated/dataModel";
+import type { Folder, Receipt } from "@curb/db/types";
 import {
-  Globe,
-  HelpCircle,
-  ShoppingCart,
-  Trash2,
-  Utensils,
-  Wrench,
-  Zap,
-} from "lucide-react";
+  BoltIcon,
+  BuildingStorefrontIcon,
+  GlobeAltIcon,
+  QuestionMarkCircleIcon,
+  ShoppingCartIcon,
+  TrashIcon,
+  WrenchIcon,
+} from "@heroicons/react/24/solid";
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -22,12 +22,12 @@ import {
 import { cn } from "@/lib/utils";
 
 const receiptTypeIcons = {
-  online: Globe,
-  other: HelpCircle,
-  restaurant: Utensils,
-  retail: ShoppingCart,
-  service: Wrench,
-  utility: Zap,
+  online: GlobeAltIcon,
+  other: QuestionMarkCircleIcon,
+  restaurant: BuildingStorefrontIcon,
+  retail: ShoppingCartIcon,
+  service: WrenchIcon,
+  utility: BoltIcon,
 } as const;
 
 const receiptTypeColors = {
@@ -44,11 +44,11 @@ const receiptTypeColors = {
 } as const;
 
 interface ReceiptDetailModalProps {
-  receipt: Doc<"receipts"> | null;
+  receipt: Receipt | null;
   onClose: () => void;
-  onDelete: (id: Id<"receipts">) => void;
-  onMove: (id: Id<"receipts">, folderId?: Id<"folders">) => void;
-  folders?: Doc<"folders">[];
+  onDelete: (id: string) => void;
+  onMove: (id: string, folderId?: string) => void;
+  folders?: Folder[];
 }
 
 function formatCurrency(amount: number, currency: string) {
@@ -77,10 +77,11 @@ export function ReceiptDetailModal({
     return null;
   }
 
-  const Icon = receiptTypeIcons[receipt.receiptType];
+  const receiptType = receipt.receiptType as keyof typeof receiptTypeIcons;
+  const Icon = receiptTypeIcons[receiptType];
 
   const handleDelete = () => {
-    onDelete(receipt._id);
+    onDelete(receipt.id);
     onClose();
   };
 
@@ -98,17 +99,16 @@ export function ReceiptDetailModal({
             <div
               className={cn(
                 "flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium",
-                receiptTypeColors[receipt.receiptType]
+                receiptTypeColors[receiptType]
               )}
             >
-              <Icon className="size-3.5" />
+              {Icon && <Icon className="size-3.5" />}
               <span className="capitalize">{receipt.receiptType}</span>
             </div>
           </div>
         </SheetHeader>
 
         <div className="flex-1 space-y-6 overflow-y-auto p-4">
-          {/* Merchant Info */}
           {(receipt.merchantAddress ||
             receipt.merchantPhone ||
             receipt.receiptNumber) && (
@@ -136,7 +136,6 @@ export function ReceiptDetailModal({
 
           <Separator />
 
-          {/* Line Items */}
           <section className="space-y-3">
             <h3 className="text-xs font-medium text-muted-foreground">Items</h3>
             <div className="space-y-2">
@@ -165,9 +164,8 @@ export function ReceiptDetailModal({
 
           <Separator />
 
-          {/* Totals */}
           <section className="space-y-2">
-            {receipt.subtotal !== undefined && (
+            {receipt.subtotal !== undefined && receipt.subtotal !== null && (
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Subtotal</span>
                 <span className="tabular-nums">
@@ -175,38 +173,46 @@ export function ReceiptDetailModal({
                 </span>
               </div>
             )}
-            {receipt.tax !== undefined && receipt.tax > 0 && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Tax</span>
-                <span className="tabular-nums">
-                  {formatCurrency(receipt.tax, receipt.currency)}
-                </span>
-              </div>
-            )}
-            {receipt.tip !== undefined && receipt.tip > 0 && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Tip</span>
-                <span className="tabular-nums">
-                  {formatCurrency(receipt.tip, receipt.currency)}
-                </span>
-              </div>
-            )}
-            {receipt.fees !== undefined && receipt.fees > 0 && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Fees</span>
-                <span className="tabular-nums">
-                  {formatCurrency(receipt.fees, receipt.currency)}
-                </span>
-              </div>
-            )}
-            {receipt.discount !== undefined && receipt.discount > 0 && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Discount</span>
-                <span className="tabular-nums text-green-600">
-                  -{formatCurrency(receipt.discount, receipt.currency)}
-                </span>
-              </div>
-            )}
+            {receipt.tax !== undefined &&
+              receipt.tax !== null &&
+              receipt.tax > 0 && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Tax</span>
+                  <span className="tabular-nums">
+                    {formatCurrency(receipt.tax, receipt.currency)}
+                  </span>
+                </div>
+              )}
+            {receipt.tip !== undefined &&
+              receipt.tip !== null &&
+              receipt.tip > 0 && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Tip</span>
+                  <span className="tabular-nums">
+                    {formatCurrency(receipt.tip, receipt.currency)}
+                  </span>
+                </div>
+              )}
+            {receipt.fees !== undefined &&
+              receipt.fees !== null &&
+              receipt.fees > 0 && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Fees</span>
+                  <span className="tabular-nums">
+                    {formatCurrency(receipt.fees, receipt.currency)}
+                  </span>
+                </div>
+              )}
+            {receipt.discount !== undefined &&
+              receipt.discount !== null &&
+              receipt.discount > 0 && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Discount</span>
+                  <span className="tabular-nums text-green-600">
+                    -{formatCurrency(receipt.discount, receipt.currency)}
+                  </span>
+                </div>
+              )}
             <Separator className="my-2" />
             <div className="flex items-center justify-between">
               <span className="text-base font-semibold">Total</span>
@@ -216,7 +222,6 @@ export function ReceiptDetailModal({
             </div>
           </section>
 
-          {/* Payment Info */}
           {(receipt.paymentMethod || receipt.cardLastFour) && (
             <>
               <Separator />
@@ -240,7 +245,6 @@ export function ReceiptDetailModal({
             </>
           )}
 
-          {/* Receipt Image */}
           {receipt.imageUrl && (
             <>
               <Separator />
@@ -264,7 +268,7 @@ export function ReceiptDetailModal({
             onClick={handleDelete}
             className="w-full"
           >
-            <Trash2 className="mr-2 size-4" />
+            <TrashIcon className="mr-2 size-4" />
             Delete Receipt
           </Button>
         </SheetFooter>

@@ -1,4 +1,4 @@
-import { FolderPlus, Upload } from "lucide-react";
+import { ArrowUpTrayIcon, FolderPlusIcon } from "@heroicons/react/24/solid";
 import type { ReactNode } from "react";
 
 import {
@@ -26,11 +26,11 @@ export function BackgroundContextMenu({
       </ContextMenuTrigger>
       <ContextMenuContent className="w-48">
         <ContextMenuItem onClick={onNewFolder} className="gap-2">
-          <FolderPlus className="size-4" />
+          <FolderPlusIcon className="size-4" />
           New Folder
         </ContextMenuItem>
         <ContextMenuItem onClick={onUploadReceipt} className="gap-2">
-          <Upload className="size-4" />
+          <ArrowUpTrayIcon className="size-4" />
           Upload Receipt
         </ContextMenuItem>
       </ContextMenuContent>
