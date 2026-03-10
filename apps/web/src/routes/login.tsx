@@ -1,8 +1,8 @@
 import { useForm } from "@tanstack/react-form";
-import { Link, createFileRoute, redirect } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { useNavigate } from "@tanstack/react-router";
 import { Fingerprint } from "lucide-react";
-import { useCallback, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -13,17 +13,19 @@ import { Separator } from "@/components/ui/separator";
 import { authClient } from "@/lib/auth-client";
 
 export const Route = createFileRoute("/login")({
-  beforeLoad: ({ context }) => {
-    if (context.isAuthenticated) {
-      throw redirect({ search: {}, to: "/dashboard" });
-    }
-  },
   component: LoginPage,
 });
 
 function LoginPage() {
   const navigate = useNavigate();
   const [isPasskeyLoading, setIsPasskeyLoading] = useState(false);
+  const { data: session, isPending } = authClient.useSession();
+
+  useEffect(() => {
+    if (!isPending && session) {
+      navigate({ search: {}, to: "/dashboard" });
+    }
+  }, [isPending, session, navigate]);
 
   const form = useForm({
     defaultValues: {

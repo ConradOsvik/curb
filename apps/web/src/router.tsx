@@ -1,8 +1,8 @@
-import { ConvexQueryClient } from "@convex-dev/react-query";
-import { env } from "@curb/env/web";
+import type { AppRouter } from "@curb/api";
 import { QueryClient } from "@tanstack/react-query";
 import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
+import { createTRPCClient, httpBatchLink } from "@trpc/client";
 
 import Loader from "./components/loader";
 
@@ -10,25 +10,20 @@ import "./index.css";
 import { routeTree } from "./routeTree.gen";
 
 export function getRouter() {
-  const convexUrl = env.VITE_CONVEX_URL;
-  if (!convexUrl) {
-    throw new Error("VITE_CONVEX_URL is not set");
-  }
-
-  const convexQueryClient = new ConvexQueryClient(convexUrl);
-
-  const queryClient: QueryClient = new QueryClient({
+  const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
-        queryFn: convexQueryClient.queryFn(),
-        queryKeyHashFn: convexQueryClient.hashFn(),
+        staleTime: 30 * 1000,
       },
     },
   });
-  convexQueryClient.connect(queryClient);
+
+  const trpcClient = createTRPCClient<AppRouter>({
+    links: [httpBatchLink({ url: "/api/trpc" })],
+  });
 
   const router = createTanStackRouter({
-    context: { convexQueryClient, queryClient },
+    context: { queryClient, trpcClient },
     defaultNotFoundComponent: () => <div>Not Found</div>,
     defaultPendingComponent: () => <Loader />,
     defaultPreload: "intent",

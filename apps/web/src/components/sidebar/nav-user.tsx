@@ -1,5 +1,9 @@
+import {
+  ArrowRightStartOnRectangleIcon,
+  ChevronUpDownIcon,
+  Cog6ToothIcon,
+} from "@heroicons/react/24/solid";
 import { Link } from "@tanstack/react-router";
-import { ChevronsUpDown, LogOut, Settings } from "lucide-react";
 import { useCallback } from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -63,7 +67,7 @@ export function NavUser({
             {user.email}
           </span>
         </div>
-        <ChevronsUpDown className="ml-auto size-4" />
+        <ChevronUpDownIcon className="ml-auto size-4" />
       </SidebarMenuButton>
     ),
     [user.avatar, user.name, user.email]
@@ -101,13 +105,13 @@ export function NavUser({
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem render={<Link to="/settings" />}>
-                <Settings />
+                <Cog6ToothIcon />
                 Settings
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={handleSignOut}>
-              <LogOut />
+              <ArrowRightStartOnRectangleIcon />
               Sign out
             </DropdownMenuItem>
           </DropdownMenuContent>

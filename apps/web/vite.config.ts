@@ -14,9 +14,6 @@ export default defineConfig({
     viteReact(),
   ],
   server: {
-    port: 3001,
-  },
-  ssr: {
-    noExternal: ["@convex-dev/better-auth"],
+    port: 3000,
   },
 });

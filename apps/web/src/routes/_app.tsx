@@ -1,36 +1,38 @@
-import { convexQuery } from "@convex-dev/react-query";
-import { api } from "@curb/backend/convex/_generated/api";
-import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 
 import { Header } from "@/components/layout/header";
+import Loader from "@/components/loader";
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { authClient } from "@/lib/auth-client";
 
 export const Route = createFileRoute("/_app")({
-  beforeLoad: ({ context }) => {
-    if (!context.isAuthenticated) {
-      throw redirect({ to: "/login" });
-    }
-  },
   component: DashboardLayout,
 });
 
 function DashboardLayout() {
-  const { data: user } = useQuery(convexQuery(api.auth.getCurrentUser, {}));
+  const { data: session, isPending } = authClient.useSession();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isPending && !session) {
+      navigate({ to: "/login" });
+    }
+  }, [isPending, session, navigate]);
+
+  if (isPending || !session) {
+    return <Loader />;
+  }
 
   return (
     <SidebarProvider>
       <AppSidebar
-        user={
-          user
-            ? {
-                avatar: user.image ?? "",
-                email: user.email ?? "",
-                name: user.name ?? "User",
-              }
-            : undefined
-        }
+        user={{
+          avatar: session.user.image ?? "",
+          email: session.user.email ?? "",
+          name: session.user.name ?? "User",
+        }}
       />
       <SidebarInset>
         <Header />

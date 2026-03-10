@@ -1,5 +1,3 @@
-import { api } from "@curb/backend/convex/_generated/api";
-import { useConvexAuth, useQuery } from "convex/react";
 import { Button, Surface } from "heroui-native";
 import { useCallback } from "react";
 import { Text, View } from "react-native";
@@ -9,17 +7,8 @@ import { SignIn } from "@/components/sign-in";
 import { SignUp } from "@/components/sign-up";
 import { authClient } from "@/lib/auth-client";
 
-function getStatusText(healthCheck: string | undefined): string {
-  if (healthCheck === undefined) {
-    return "Checking...";
-  }
-  return healthCheck === "OK" ? "Connected to API" : "API Disconnected";
-}
-
 export default function Home() {
-  const healthCheck = useQuery(api.healthCheck.get);
-  const { isAuthenticated } = useConvexAuth();
-  const user = useQuery(api.auth.getCurrentUser, isAuthenticated ? {} : "skip");
+  const { data: session, isPending } = authClient.useSession();
 
   const handleSignOut = useCallback(() => {
     authClient.signOut();
@@ -29,19 +18,21 @@ export default function Home() {
     <Container className="p-4">
       <View className="py-6 mb-4">
         <Text className="text-3xl font-semibold text-foreground tracking-tight">
-          Better T Stack
+          Curb
         </Text>
-        <Text className="text-muted text-sm mt-1">
-          Full-stack TypeScript starter
-        </Text>
+        <Text className="text-muted text-sm mt-1">Receipt management</Text>
       </View>
 
-      {user ? (
+      {session?.user ? (
         <Surface variant="secondary" className="mb-4 p-4 rounded-lg">
           <View className="flex-row items-center justify-between">
             <View className="flex-1">
-              <Text className="text-foreground font-medium">{user.name}</Text>
-              <Text className="text-muted text-xs mt-0.5">{user.email}</Text>
+              <Text className="text-foreground font-medium">
+                {session.user.name}
+              </Text>
+              <Text className="text-muted text-xs mt-0.5">
+                {session.user.email}
+              </Text>
             </View>
             <Button variant="destructive" size="sm" onPress={handleSignOut}>
               Sign Out
@@ -49,18 +40,19 @@ export default function Home() {
           </View>
         </Surface>
       ) : null}
+
       <Surface variant="secondary" className="p-4 rounded-lg">
-        <Text className="text-foreground font-medium mb-2">API Status</Text>
+        <Text className="text-foreground font-medium mb-2">Status</Text>
         <View className="flex-row items-center gap-2">
           <View
-            className={`w-2 h-2 rounded-full ${healthCheck === "OK" ? "bg-success" : "bg-danger"}`}
+            className={`w-2 h-2 rounded-full ${isPending ? "bg-warning" : "bg-success"}`}
           />
           <Text className="text-muted text-xs">
-            {getStatusText(healthCheck)}
+            {isPending ? "Loading..." : "Connected"}
           </Text>
         </View>
       </Surface>
-      {!user && (
+      {!session?.user && (
         <View className="mt-4 gap-4">
           <SignIn />
           <SignUp />

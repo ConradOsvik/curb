@@ -1,22 +1,19 @@
 import "@/global.css";
-import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
+import type { AppRouter } from "@curb/api";
 import { env } from "@curb/env/native";
-import { ConvexReactClient } from "convex/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import { Stack } from "expo-router";
 import { HeroUINativeProvider } from "heroui-native";
+import { useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 
 import { AppThemeProvider } from "@/contexts/app-theme-context";
-import { authClient } from "@/lib/auth-client";
 
 export const unstable_settings = {
   initialRouteName: "(drawer)",
 };
-
-const convex = new ConvexReactClient(env.EXPO_PUBLIC_CONVEX_URL, {
-  unsavedChangesWarning: false,
-});
 
 function StackLayout() {
   return (
@@ -31,8 +28,19 @@ function StackLayout() {
 }
 
 export default function Layout() {
+  const [queryClient] = useState(() => new QueryClient());
+  const [_trpcClient] = useState(() =>
+    createTRPCClient<AppRouter>({
+      links: [
+        httpBatchLink({
+          url: `${env.EXPO_PUBLIC_API_URL}/api/trpc`,
+        }),
+      ],
+    })
+  );
+
   return (
-    <ConvexBetterAuthProvider client={convex} authClient={authClient}>
+    <QueryClientProvider client={queryClient}>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <KeyboardProvider>
           <AppThemeProvider>
@@ -42,6 +50,6 @@ export default function Layout() {
           </AppThemeProvider>
         </KeyboardProvider>
       </GestureHandlerRootView>
-    </ConvexBetterAuthProvider>
+    </QueryClientProvider>
   );
 }

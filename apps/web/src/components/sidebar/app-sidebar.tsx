@@ -1,5 +1,9 @@
+import {
+  Cog6ToothIcon,
+  DocumentTextIcon,
+  TrashIcon,
+} from "@heroicons/react/24/solid";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Receipt, Settings } from "lucide-react";
 
 import {
   Sidebar,
@@ -18,12 +22,17 @@ import { NavUser } from "./nav-user";
 
 const navItems = [
   {
-    icon: Receipt,
+    icon: DocumentTextIcon,
     label: "Receipts",
     to: "/dashboard",
   },
   {
-    icon: Settings,
+    icon: TrashIcon,
+    label: "Trash",
+    to: "/trash",
+  },
+  {
+    icon: Cog6ToothIcon,
     label: "Settings",
     to: "/settings",
   },
