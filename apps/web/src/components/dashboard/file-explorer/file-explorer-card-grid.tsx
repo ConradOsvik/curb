@@ -51,11 +51,6 @@ function ParentDropCardInline({ onNavigate }: { onNavigate: () => void }) {
         isOver && "bg-blue-500/20 ring-2 ring-blue-500 rounded-lg"
       )}
       onDoubleClick={onNavigate}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") {
-          onNavigate();
-        }
-      }}
     >
       <FolderIcon className="size-16 shrink-0 text-muted-foreground/60 drop-shadow-sm" />
       <span className="max-w-full truncate rounded-md px-1.5 py-0.5 text-xs font-medium">
@@ -84,6 +79,7 @@ interface FileExplorerCardGridProps {
   onDeleteFolder: (folderId: string) => void;
   onMoveReceipt: (receiptId: string, targetId?: string) => void;
   onDeleteReceipt: (receiptId: string) => void;
+  onFocusItem: (id: string) => void;
   setItemRef: (id: string, el: HTMLElement | null) => void;
   dropIntoTarget?: string | null;
 }
@@ -107,6 +103,7 @@ export function FileExplorerCardGrid({
   onDeleteFolder,
   onMoveReceipt,
   onDeleteReceipt,
+  onFocusItem,
   setItemRef,
   dropIntoTarget,
 }: FileExplorerCardGridProps) {
@@ -125,7 +122,7 @@ export function FileExplorerCardGrid({
 
   return (
     <div className="flex-1 overflow-y-auto p-4">
-      <div className="grid gap-1 grid-cols-[repeat(auto-fill,110px)]">
+      <div className="grid gap-2 grid-cols-[repeat(auto-fill,120px)]">
         {currentFolderId && (
           <ParentDropCardInline onNavigate={() => onNavigate(parentFolderId)} />
         )}
@@ -171,7 +168,9 @@ export function FileExplorerCardGrid({
                               "bg-blue-500/20 ring-2 ring-blue-500 rounded-lg"
                           )}
                           onClick={(e) => onSelect(folder.id, e)}
+                          onFocus={() => onFocusItem(folder.id)}
                           onDoubleClick={() => onNavigate(folder.id)}
+                          onKeyDown={() => {}}
                         >
                           <FolderIcon
                             className={cn(
@@ -229,17 +228,28 @@ export function FileExplorerCardGrid({
                     tabIndex={0}
                     aria-selected={selected}
                     className={cn(
-                      "flex h-full cursor-default flex-col rounded-lg p-1 outline-none transition-colors",
-                      selected
-                        ? "bg-accent/60"
-                        : "hover:bg-accent/30",
+                      "flex h-full w-full cursor-default flex-col rounded-lg p-1.5 outline-none transition-colors",
+                      selected ? "bg-accent/60" : "hover:bg-accent/30",
                       "focus-visible:ring-2 focus-visible:ring-blue-500"
                     )}
                     onClick={(e) => onSelect(receipt.id, e)}
+                    onFocus={() => onFocusItem(receipt.id)}
                     onDoubleClick={() => onViewReceipt(receipt)}
+                    onKeyDown={() => {}}
                   >
-                    <div className="flex flex-col gap-1 rounded-t-md bg-white px-2 pt-2 pb-2.5 text-gray-900 dark:bg-gray-100 dark:text-gray-900">
-                      <span className="truncate text-sm font-semibold">
+                    <svg
+                      className="block w-full text-white drop-shadow-[0_-1px_0_rgba(0,0,0,0.05)] dark:text-gray-100 dark:drop-shadow-none"
+                      viewBox="0 0 120 5"
+                      preserveAspectRatio="none"
+                      height="5"
+                    >
+                      <path
+                        d="M0,5 H120 V0 A5,5 0 0,1 110,0 A5,5 0 0,1 100,0 A5,5 0 0,1 90,0 A5,5 0 0,1 80,0 A5,5 0 0,1 70,0 A5,5 0 0,1 60,0 A5,5 0 0,1 50,0 A5,5 0 0,1 40,0 A5,5 0 0,1 30,0 A5,5 0 0,1 20,0 A5,5 0 0,1 10,0 A5,5 0 0,1 0,0 Z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                    <div className="flex flex-1 flex-col gap-1 bg-white px-2 py-2 text-gray-900 shadow-sm ring-1 ring-black/5 dark:bg-gray-100 dark:text-gray-900 dark:shadow-none dark:ring-0">
+                      <span className="truncate text-xs font-semibold">
                         {receipt.merchantName}
                       </span>
                       <div className="flex items-center justify-between text-[10px] text-gray-500">
@@ -248,12 +258,12 @@ export function FileExplorerCardGrid({
                           {receipt.receiptType}
                         </span>
                       </div>
-                      <span className="text-sm font-bold tabular-nums">
+                      <span className="text-xs font-bold tabular-nums">
                         {formatCurrency(receipt.total, receipt.currency)}
                       </span>
                     </div>
                     <svg
-                      className="block w-full text-white dark:text-gray-100"
+                      className="block w-full text-white drop-shadow-[0_1px_0_rgba(0,0,0,0.05)] dark:text-gray-100 dark:drop-shadow-none"
                       viewBox="0 0 120 5"
                       preserveAspectRatio="none"
                       height="5"
@@ -272,7 +282,9 @@ export function FileExplorerCardGrid({
 
         {scanningCount > 0 &&
           Array.from({ length: scanningCount }).map((_, i) => (
-            <ScanningPlaceholderCard key={`scanning-${i.toString()}`} />
+            <ScanningPlaceholderCard
+              key={`scanning-placeholder-${String(i)}`}
+            />
           ))}
       </div>
     </div>

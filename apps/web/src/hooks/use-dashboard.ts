@@ -2,7 +2,7 @@ import type { FolderColor } from "@curb/api";
 import type { Folder, Receipt } from "@curb/db/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { useTRPC } from "@/lib/trpc";
@@ -35,12 +35,46 @@ export function sortItems(items: ExplorerItem[]): ExplorerItem[] {
   });
 }
 
+const FOLDER_SESSION_KEY = "curb:currentFolder";
+
 export function useDashboardState() {
   const search = useSearch({ from: "/_app/dashboard" }) as {
     folder?: string;
   };
   const navigate = useNavigate();
+
+  // Restore from sessionStorage on mount if URL has no folder param
+  const hasRestoredRef = useRef(false);
+  useEffect(() => {
+    if (hasRestoredRef.current) {
+      return;
+    }
+    hasRestoredRef.current = true;
+
+    if (!search.folder) {
+      const saved = sessionStorage.getItem(FOLDER_SESSION_KEY);
+      if (saved) {
+        navigate({
+          replace: true,
+          search: { folder: saved },
+          to: "/dashboard",
+        });
+      }
+    }
+    // Only run on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const currentFolderId = search.folder;
+
+  // Keep sessionStorage in sync with URL
+  useEffect(() => {
+    if (currentFolderId) {
+      sessionStorage.setItem(FOLDER_SESSION_KEY, currentFolderId);
+    } else {
+      sessionStorage.removeItem(FOLDER_SESSION_KEY);
+    }
+  }, [currentFolderId]);
 
   const setCurrentFolderId = useCallback(
     (folderId?: string) => {
@@ -362,17 +396,8 @@ export function useFileUpload(
   const [scanningCount, setScanningCount] = useState(0);
   const invalidateAll = useInvalidateAll();
 
-  const handleUpload = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const { files } = e.target;
-      if (!files || files.length === 0) {
-        return;
-      }
-
-      const imageFiles = [...files].filter((file) =>
-        file.type.startsWith("image/")
-      );
-
+  const uploadFiles = useCallback(
+    async (imageFiles: File[]) => {
       if (imageFiles.length === 0) {
         toast.error("Please upload image files only");
         return;
@@ -416,11 +441,26 @@ export function useFileUpload(
         setScanningCount(0);
         invalidateAll();
       }
-
-      e.target.value = "";
     },
     [currentFolderId, mutations, invalidateAll]
   );
 
-  return { handleUpload, scanningCount };
+  const handleUpload = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { files } = e.target;
+      if (!files || files.length === 0) {
+        return;
+      }
+
+      const imageFiles = [...files].filter((file) =>
+        file.type.startsWith("image/")
+      );
+
+      uploadFiles(imageFiles);
+      e.target.value = "";
+    },
+    [uploadFiles]
+  );
+
+  return { handleUpload, scanningCount, uploadFiles };
 }

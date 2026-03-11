@@ -1,3 +1,4 @@
+import type { Receipt } from "@curb/db/types";
 import { useHotkey } from "@tanstack/react-hotkeys";
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useMemo, useRef, useState } from "react";
@@ -39,7 +40,7 @@ function DashboardPage() {
   const mutations = useDashboardMutations();
   const folderActions = useFolderActions(mutations, state);
   const receiptActions = useReceiptActions(mutations, state.currentFolderId);
-  const { handleUpload, scanningCount } = useFileUpload(
+  const { handleUpload, scanningCount, uploadFiles } = useFileUpload(
     mutations,
     state.currentFolderId
   );
@@ -124,18 +125,129 @@ function DashboardPage() {
 
   // --- Keyboard shortcuts ---
 
+  const focusItem = useCallback(
+    (id: string) => {
+      selection.selectSingle(id);
+      // Focus the DOM element so the focus ring appears
+      const el = itemRefsRef.current.get(id);
+      // The focusable element is nested inside the ref wrapper
+      const focusable = el?.querySelector<HTMLElement>("[tabindex='0']");
+      (focusable ?? el)?.focus();
+    },
+    [selection]
+  );
+
+  const navigateItems = useCallback(
+    (direction: 1 | -1) => {
+      const itemIds = queries.items.map((entry) => entry.item.id);
+      if (itemIds.length === 0) {
+        return;
+      }
+
+      if (selection.selectedIds.size === 0) {
+        // Nothing selected: Down/Right → first, Up/Left → last
+        focusItem(direction === 1 ? itemIds[0] : itemIds.at(-1));
+        return;
+      }
+
+      // Find the last selected item's position and move from there
+      const [currentId] = [...selection.selectedIds];
+      const currentIndex = itemIds.indexOf(currentId);
+      if (currentIndex === -1) {
+        focusItem(direction === 1 ? itemIds[0] : itemIds.at(-1));
+        return;
+      }
+
+      const nextIndex = currentIndex + direction;
+      if (nextIndex < 0 || nextIndex >= itemIds.length) {
+        return;
+      }
+
+      focusItem(itemIds[nextIndex]);
+    },
+    [queries.items, selection.selectedIds, focusItem]
+  );
+
+  // Arrow Down/Right: focus next item
+  useHotkey(
+    "ArrowDown",
+    (e) => {
+      e.preventDefault();
+      navigateItems(1);
+    },
+    { enabled: editingId === null }
+  );
+
+  useHotkey(
+    "ArrowRight",
+    (e) => {
+      e.preventDefault();
+      navigateItems(1);
+    },
+    { enabled: editingId === null }
+  );
+
+  // Arrow Up/Left: focus previous item
+  useHotkey(
+    "ArrowUp",
+    (e) => {
+      e.preventDefault();
+      navigateItems(-1);
+    },
+    { enabled: editingId === null }
+  );
+
+  useHotkey(
+    "ArrowLeft",
+    (e) => {
+      e.preventDefault();
+      navigateItems(-1);
+    },
+    { enabled: editingId === null }
+  );
+
+  // Enter: rename selected item (macOS Finder behavior)
   useHotkey(
     "Enter",
     (e) => {
       if (selection.selectedIds.size !== 1) {
         return;
       }
+      e.preventDefault();
+      const [id] = [...selection.selectedIds];
+      setEditingId(id);
+    },
+    { enabled: editingId === null }
+  );
+
+  // Cmd+Down: open selected folder or view selected receipt
+  useHotkey(
+    "Mod+ArrowDown",
+    (e) => {
+      if (selection.selectedIds.size !== 1) {
+        return;
+      }
+      e.preventDefault();
       const [id] = [...selection.selectedIds];
       const item = queries.items.find((entry) => entry.item.id === id);
       if (item?.type === "folder") {
-        e.preventDefault();
-        setEditingId(id);
+        handleNavigate(id);
+      } else if (item?.type === "receipt") {
+        state.setViewingReceipt(item.item as Receipt);
       }
+    },
+    { enabled: editingId === null }
+  );
+
+  // Cmd+Up: go to parent folder
+  useHotkey(
+    "Mod+ArrowUp",
+    (e) => {
+      if (!state.currentFolderId) {
+        return;
+      }
+      e.preventDefault();
+      handleNavigate(parentFolderId);
     },
     { enabled: editingId === null }
   );
@@ -196,6 +308,7 @@ function DashboardPage() {
     onChangeFolderColor: folderActions.handleChangeFolderColor,
     onDeleteFolder: handleDeleteFolder,
     onDeleteReceipt: handleDeleteReceipt,
+    onFocusItem: selection.selectSingle,
     onMoveFolder: folderActions.handleMoveFolder,
     onMoveReceipt: receiptActions.handleMoveReceipt,
     onNavigate: handleNavigate,
@@ -240,18 +353,21 @@ function DashboardPage() {
             />
 
             <div className="flex-1 overflow-hidden">
-              <UploadDropzone
-                currentFolderId={state.currentFolderId}
-                className="h-full"
-              >
+              <UploadDropzone onFiles={uploadFiles} className="h-full">
                 <BackgroundContextMenu
                   onNewFolder={() => setCreateFolderOpen(true)}
                   onUploadReceipt={() => fileInputRef.current?.click()}
                 >
                   <div
+                    role="presentation"
                     ref={containerRef}
                     className="relative flex h-full flex-col overflow-hidden"
                     onClick={handleBackgroundClick}
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") {
+                        handleBackgroundClick(e as unknown as React.MouseEvent);
+                      }
+                    }}
                   >
                     <SelectionBox
                       containerRef={containerRef}

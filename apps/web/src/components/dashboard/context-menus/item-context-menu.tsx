@@ -62,7 +62,9 @@ export function ItemContextMenu(props: ItemContextMenuProps) {
 
   return (
     <ContextMenu>
-      <ContextMenuTrigger className="block h-full">{children}</ContextMenuTrigger>
+      <ContextMenuTrigger className="block h-full">
+        {children}
+      </ContextMenuTrigger>
       <ContextMenuContent className="w-48">
         {type === "receipt" && (
           <>

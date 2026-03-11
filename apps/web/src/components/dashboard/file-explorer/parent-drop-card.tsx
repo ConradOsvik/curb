@@ -19,11 +19,6 @@ export function ParentDropCard({ onNavigate }: { onNavigate: () => void }) {
         isOver && "bg-accent/50 ring-1 ring-ring"
       )}
       onDoubleClick={onNavigate}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") {
-          onNavigate();
-        }
-      }}
     >
       <ArrowUpIcon className="size-8" />
       <span className="text-xs font-medium">..</span>

@@ -23,7 +23,7 @@ import { NavUser } from "./nav-user";
 const navItems = [
   {
     icon: DocumentTextIcon,
-    label: "Receipts",
+    label: "Files",
     to: "/dashboard",
   },
   {
@@ -76,13 +76,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.to}>
                   <SidebarMenuButton
-                    render={
-                      item.to === "/dashboard" ? (
-                        <Link to="/dashboard" search={{}} />
-                      ) : (
-                        <Link to={item.to} />
-                      )
-                    }
+                    render={<Link to={item.to} />}
                     isActive={currentPath === item.to}
                     tooltip={item.label}
                   >

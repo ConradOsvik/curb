@@ -89,7 +89,7 @@ export function ReceiptDetailModal({
     <Sheet open={receipt !== null} onOpenChange={(open) => !open && onClose()}>
       <SheetContent side="right" className="w-full sm:max-w-md">
         <SheetHeader>
-          <div className="flex items-start justify-between">
+          <div className="flex items-start justify-between pr-8">
             <div>
               <SheetTitle className="text-lg">
                 {receipt.merchantName}
@@ -108,7 +108,7 @@ export function ReceiptDetailModal({
           </div>
         </SheetHeader>
 
-        <div className="flex-1 space-y-6 overflow-y-auto p-4">
+        <div className="flex-1 space-y-6 overflow-y-auto p-4" tabIndex={-1}>
           {(receipt.merchantAddress ||
             receipt.merchantPhone ||
             receipt.receiptNumber) && (

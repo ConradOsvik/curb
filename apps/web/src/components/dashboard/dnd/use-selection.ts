@@ -16,6 +16,7 @@ interface UseSelectionReturn {
   handleSelectAll: () => void;
   clearSelection: () => void;
   isSelected: (id: string) => boolean;
+  selectSingle: (id: string) => void;
   handleRubberBandSelect: (ids: string[], additive: boolean) => void;
 }
 
@@ -75,6 +76,11 @@ export function useSelection({
     [items, lastSelectedId]
   );
 
+  const selectSingle = useCallback((id: string) => {
+    setSelectedIds(new Set([id]));
+    setLastSelectedId(id);
+  }, []);
+
   const handleSelectAll = useCallback(() => {
     setSelectedIds(new Set(items.map((item) => item.id)));
   }, [items]);
@@ -113,6 +119,7 @@ export function useSelection({
     handleSelectAll,
     isSelected,
     lastSelectedId,
+    selectSingle,
     selectedIds,
   };
 }

@@ -38,6 +38,7 @@ interface FolderRowProps {
   isDropTarget?: boolean;
   isEditing?: boolean;
   onClick: (e: React.MouseEvent) => void;
+  onFocus: () => void;
   onDoubleClick: () => void;
   onSaveEdit?: (name: string) => void;
   onCancelEdit?: () => void;
@@ -48,13 +49,14 @@ interface ReceiptRowProps {
   item: Receipt;
   isSelected: boolean;
   onClick: (e: React.MouseEvent) => void;
+  onFocus: () => void;
   onDoubleClick: () => void;
 }
 
 type FileExplorerRowProps = FolderRowProps | ReceiptRowProps;
 
 export function FileExplorerRow(props: FileExplorerRowProps) {
-  const { type, isSelected, onClick, onDoubleClick } = props;
+  const { type, isSelected, onClick, onFocus, onDoubleClick } = props;
 
   if (type === "folder") {
     const folder = props.item;
@@ -74,12 +76,8 @@ export function FileExplorerRow(props: FileExplorerRowProps) {
           props.isDropTarget && "bg-blue-500/20 ring-2 ring-inset ring-blue-500"
         )}
         onClick={onClick}
+        onFocus={onFocus}
         onDoubleClick={onDoubleClick}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            onDoubleClick();
-          }
-        }}
       >
         <FolderIcon className={cn("size-4 shrink-0", colorClass)} />
         {props.isEditing ? (
@@ -113,12 +111,8 @@ export function FileExplorerRow(props: FileExplorerRowProps) {
           : "hover:bg-accent/50"
       )}
       onClick={onClick}
+      onFocus={onFocus}
       onDoubleClick={onDoubleClick}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") {
-          onDoubleClick();
-        }
-      }}
     >
       <div className="size-4 shrink-0 rounded-sm border bg-muted" />
       <span className="flex-1 truncate">{receipt.merchantName}</span>

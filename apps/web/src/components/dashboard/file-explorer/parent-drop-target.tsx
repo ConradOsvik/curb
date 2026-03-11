@@ -18,11 +18,6 @@ export function ParentDropRow({ onNavigate }: { onNavigate: () => void }) {
         isOver && "bg-accent/50 ring-1 ring-ring"
       )}
       onDoubleClick={onNavigate}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") {
-          onNavigate();
-        }
-      }}
     >
       <ArrowUpIcon className="size-4 shrink-0" />
       <span className="flex-1 truncate font-medium">..</span>

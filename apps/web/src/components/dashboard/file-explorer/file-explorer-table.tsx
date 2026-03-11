@@ -25,11 +25,6 @@ function ParentDropRowInline({ onNavigate }: { onNavigate: () => void }) {
         isOver && "bg-blue-500/20 ring-2 ring-blue-500"
       )}
       onDoubleClick={onNavigate}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") {
-          onNavigate();
-        }
-      }}
     >
       <FolderIcon className="size-4 shrink-0 text-muted-foreground/60" />
       <span className="flex-1 truncate font-medium">..</span>
@@ -59,6 +54,7 @@ interface FileExplorerTableProps {
   onDeleteFolder: (folderId: string) => void;
   onMoveReceipt: (receiptId: string, targetId?: string) => void;
   onDeleteReceipt: (receiptId: string) => void;
+  onFocusItem: (id: string) => void;
   setItemRef: (id: string, el: HTMLElement | null) => void;
   dropIntoTarget?: string | null;
 }
@@ -82,6 +78,7 @@ export function FileExplorerTable({
   onDeleteFolder,
   onMoveReceipt,
   onDeleteReceipt,
+  onFocusItem,
   setItemRef,
   dropIntoTarget,
 }: FileExplorerTableProps) {
@@ -146,6 +143,7 @@ export function FileExplorerTable({
                       isDropTarget={dropIntoTarget === entry.item.id}
                       isEditing={isEditing}
                       onClick={(e) => onSelect(entry.item.id, e)}
+                      onFocus={() => onFocusItem(entry.item.id)}
                       onDoubleClick={() => onNavigate(entry.item.id)}
                       onSaveEdit={(name) => onSaveEdit(entry.item.id, name)}
                       onCancelEdit={onCancelEdit}
@@ -178,6 +176,7 @@ export function FileExplorerTable({
                   item={entry.item as Receipt}
                   isSelected={isSelected(entry.item.id)}
                   onClick={(e) => onSelect(entry.item.id, e)}
+                  onFocus={() => onFocusItem(entry.item.id)}
                   onDoubleClick={() => onViewReceipt(entry.item as Receipt)}
                 />
               </DraggableItem>
@@ -188,7 +187,7 @@ export function FileExplorerTable({
 
       {scanningCount > 0 &&
         Array.from({ length: scanningCount }).map((_, i) => (
-          <ScanningPlaceholderRow key={`scanning-${i.toString()}`} />
+          <ScanningPlaceholderRow key={`scanning-placeholder-${String(i)}`} />
         ))}
     </div>
   );
