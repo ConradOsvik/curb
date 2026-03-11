@@ -276,6 +276,10 @@ export const receiptsRouter = router({
         throw new Error("Receipt not found in trash");
       }
 
+      if (receipt.storageKey) {
+        await storage.deleteObject(receipt.storageKey);
+      }
+
       await ctx.db.delete(receipts).where(eq(receipts.id, input.id));
       return input.id;
     }),
@@ -351,6 +355,10 @@ export const receiptsRouter = router({
         if (inserted) {
           receiptIds.push(inserted.id);
         }
+      }
+
+      if (input.storageKey && receiptIds.length > 0) {
+        await storage.confirmObject(input.storageKey);
       }
 
       return { ...output, receiptIds };
