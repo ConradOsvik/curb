@@ -1,42 +1,27 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Fingerprint, Monitor, Moon, Sun, Trash2 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { LogOut, Monitor, Moon, Sun } from "lucide-react";
+import { Suspense, useCallback, useState } from "react";
 import { toast } from "sonner";
 
+import { ChangeEmail } from "@/components/settings/change-email";
+import { ChangePassword } from "@/components/settings/change-password";
+import { DangerZone } from "@/components/settings/danger-zone";
+import { EmailVerification } from "@/components/settings/email-verification";
+import { PasskeysList } from "@/components/settings/passkeys-list";
+import { SectionSkeleton } from "@/components/settings/section-skeleton";
+import { SessionsList } from "@/components/settings/sessions-list";
+import { SessionsSkeleton } from "@/components/settings/sessions-skeleton";
+import { TwoFactorSetup } from "@/components/settings/two-factor-setup";
 import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import { authClient } from "@/lib/auth-client";
-
-export const Route = createFileRoute("/_app/settings")({
-  component: SettingsPage,
-});
-
-interface Passkey {
-  id: string;
-  name?: string | null;
-  createdAt: Date;
-}
 
 function SettingsPage() {
   const { theme, setTheme } = useTheme();
-  const [passkeys, setPasskeys] = useState<Passkey[]>([]);
+  const navigate = useNavigate();
   const [isRegistering, setIsRegistering] = useState(false);
-
-  const loadPasskeys = useCallback(async () => {
-    try {
-      const result = await authClient.passkey.listUserPasskeys();
-      if (result.data) {
-        setPasskeys(result.data);
-      }
-    } catch {
-      // Passkeys may not be supported
-    }
-  }, []);
-
-  useEffect(() => {
-    loadPasskeys();
-  }, [loadPasskeys]);
 
   const handleRegisterPasskey = useCallback(async () => {
     setIsRegistering(true);
@@ -46,27 +31,18 @@ function SettingsPage() {
         toast.error(result.error.message || "Failed to register passkey");
       } else {
         toast.success("Passkey registered");
-        loadPasskeys();
       }
     } catch {
       toast.error("Failed to register passkey");
     } finally {
       setIsRegistering(false);
     }
-  }, [loadPasskeys]);
+  }, []);
 
-  const handleDeletePasskey = useCallback(
-    async (id: string) => {
-      try {
-        await authClient.passkey.deletePasskey({ id });
-        toast.success("Passkey deleted");
-        loadPasskeys();
-      } catch {
-        toast.error("Failed to delete passkey");
-      }
-    },
-    [loadPasskeys]
-  );
+  const handleSignOut = useCallback(async () => {
+    await authClient.signOut();
+    navigate({ to: "/login" });
+  }, [navigate]);
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 p-6">
@@ -78,6 +54,7 @@ function SettingsPage() {
       </div>
 
       <div className="space-y-4">
+        {/* Appearance */}
         <div className="rounded-lg border p-4">
           <h2 className="mb-4 text-sm font-medium">Appearance</h2>
           <div className="space-y-3">
@@ -90,90 +67,86 @@ function SettingsPage() {
             <div className="flex gap-2">
               <Button
                 variant={theme === "light" ? "default" : "outline"}
-                size="sm"
                 onClick={() => setTheme("light")}
               >
-                <Sun className="mr-1.5 size-4" />
+                <Sun className="size-4" />
                 Light
               </Button>
               <Button
                 variant={theme === "dark" ? "default" : "outline"}
-                size="sm"
                 onClick={() => setTheme("dark")}
               >
-                <Moon className="mr-1.5 size-4" />
+                <Moon className="size-4" />
                 Dark
               </Button>
               <Button
                 variant={theme === "system" ? "default" : "outline"}
-                size="sm"
                 onClick={() => setTheme("system")}
               >
-                <Monitor className="mr-1.5 size-4" />
+                <Monitor className="size-4" />
                 System
               </Button>
             </div>
           </div>
         </div>
 
+        {/* Account */}
+        <div className="rounded-lg border p-4">
+          <h2 className="mb-4 text-sm font-medium">Account</h2>
+          <div className="space-y-4">
+            <EmailVerification />
+            <Separator />
+            <ChangeEmail />
+            <Separator />
+            <ChangePassword />
+          </div>
+        </div>
+
+        {/* Security */}
         <div className="rounded-lg border p-4">
           <h2 className="mb-4 text-sm font-medium">Security</h2>
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Label>Passkeys</Label>
-                <p className="text-xs text-muted-foreground">
-                  Use biometrics or a security key to sign in
-                </p>
-              </div>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleRegisterPasskey}
-                disabled={isRegistering}
-              >
-                <Fingerprint className="mr-1.5 size-4" />
-                {isRegistering ? "Registering..." : "Register Passkey"}
-              </Button>
-            </div>
-
-            {passkeys.length > 0 && (
-              <div className="space-y-2">
-                {passkeys.map((pk) => (
-                  <div
-                    key={pk.id}
-                    className="flex items-center justify-between rounded-md border px-3 py-2"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Fingerprint className="size-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm font-medium">
-                          {pk.name || "Passkey"}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Added{" "}
-                          {new Date(pk.createdAt).toLocaleDateString("en-US", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          })}
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeletePasskey(pk.id)}
-                    >
-                      <Trash2 className="size-4 text-destructive" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
+            <TwoFactorSetup />
+            <Separator />
+            <Suspense fallback={<SectionSkeleton />}>
+              <PasskeysList
+                onRegister={handleRegisterPasskey}
+                isRegistering={isRegistering}
+              />
+            </Suspense>
           </div>
         </div>
+
+        {/* Sessions */}
+        <div className="rounded-lg border p-4">
+          <Suspense fallback={<SessionsSkeleton />}>
+            <SessionsList />
+          </Suspense>
+        </div>
+
+        {/* Sign out */}
+        <div className="rounded-lg border p-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <Label>Sign out</Label>
+              <p className="text-xs text-muted-foreground">
+                Sign out of your account on this device
+              </p>
+            </div>
+            <Button variant="outline" onClick={handleSignOut}>
+              <LogOut className="size-4" />
+              Sign out
+            </Button>
+          </div>
+        </div>
+
+        {/* Danger Zone */}
+        <DangerZone />
       </div>
     </div>
   );
 }
+
+export const Route = createFileRoute("/_app/settings")({
+  component: SettingsPage,
+});
