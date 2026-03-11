@@ -33,6 +33,10 @@
     "auth:generate": {
       "cache": false
     },
+    "email:dev": {
+      "cache": false,
+      "persistent": true
+    },
     "dev": {
       "dependsOn": ["@curb/db#db:push"],
       "cache": false,
@@ -41,17 +45,13 @@
     "typecheck": {
       "dependsOn": ["^typecheck"]
     },
-    "lint": {
-      "dependsOn": ["^lint"]
-    },
-    "lint:fix": {
+    "//#lint": {},
+    "//#lint:fix": {
       "cache": false
     },
-    "format": {
+    "//#format": {
       "cache": false
     },
-    "format:check": {
-      "dependsOn": ["^format:check"]
-    }
+    "//#format:check": {}
   }
 }

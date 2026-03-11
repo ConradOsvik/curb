@@ -1,14 +1,13 @@
-# Ultracite Code Standards
+# Code Standards
 
-This project uses **Ultracite**, a zero-config preset that enforces strict code quality standards through automated formatting and linting.
+This project uses **oxlint** and **oxfmt** directly for linting and formatting.
 
 ## Quick Reference
 
-- **Format code**: `bunx ultracite fix`
-- **Check for issues**: `bunx ultracite check`
-- **Diagnose setup**: `bunx ultracite doctor`
-
-Oxlint + Oxfmt (the underlying engine) provides robust linting and formatting. Most issues are automatically fixable.
+- **Check all**: `bun check` (runs lint + format:check via turbo)
+- **Fix all**: `bun fix` (runs lint:fix + format via turbo)
+- **Lint only**: `bun lint` / `bun lint:fix`
+- **Format only**: `bun format` / `bun format:check`
 
 ---
 
@@ -123,4 +122,4 @@ Oxlint + Oxfmt's linter will catch most issues automatically. Focus your attenti
 
 ---
 
-Most formatting and common issues are automatically fixed by Oxlint + Oxfmt. Run `bunx ultracite fix` before committing to ensure compliance.
+Most formatting and common issues are automatically fixed. Run `bun fix` before committing to ensure compliance.
