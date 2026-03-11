@@ -9,6 +9,10 @@ import { authClient } from "@/lib/auth-client";
 
 type Step = "idle" | "setup" | "verify" | "backup-codes";
 
+function getButtonLabel(twoFactorEnabled: boolean): string {
+  return twoFactorEnabled ? "Disable 2FA" : "Continue";
+}
+
 export function TwoFactorSetup() {
   const { data: sessionData, isPending } = authClient.useSession();
   const [step, setStep] = useState<Step>("idle");
@@ -197,7 +201,11 @@ export function TwoFactorSetup() {
           onChange={(e) => setPassword(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
-              twoFactorEnabled ? handleDisable() : handleEnable();
+              if (twoFactorEnabled) {
+                handleDisable();
+              } else {
+                handleEnable();
+              }
             }
           }}
           autoFocus
@@ -211,11 +219,7 @@ export function TwoFactorSetup() {
             onClick={twoFactorEnabled ? handleDisable : handleEnable}
             disabled={!password || isSubmitting}
           >
-            {isSubmitting
-              ? "Processing..."
-              : (twoFactorEnabled
-                ? "Disable 2FA"
-                : "Continue")}
+            {isSubmitting ? "Processing..." : getButtonLabel(twoFactorEnabled)}
           </Button>
         </div>
       </div>

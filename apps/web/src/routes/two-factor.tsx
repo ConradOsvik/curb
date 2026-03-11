@@ -8,6 +8,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
 
+function getMethodDescription(method: string): string {
+  if (method === "totp") {
+    return "Enter the code from your authenticator app";
+  }
+  if (method === "otp") {
+    return "Enter the code sent to your email";
+  }
+  return "Enter one of your backup codes";
+}
+
 export const Route = createFileRoute("/two-factor")({
   component: TwoFactorPage,
 });
@@ -86,11 +96,7 @@ function TwoFactorPage() {
             Two-factor authentication
           </h1>
           <p className="text-sm text-muted-foreground">
-            {method === "totp"
-              ? "Enter the code from your authenticator app"
-              : (method === "otp"
-                ? "Enter the code sent to your email"
-                : "Enter one of your backup codes")}
+            {getMethodDescription(method)}
           </p>
         </div>
 

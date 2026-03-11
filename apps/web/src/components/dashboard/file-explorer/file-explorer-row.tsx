@@ -78,6 +78,7 @@ export function FileExplorerRow(props: FileExplorerRowProps) {
         onClick={onClick}
         onFocus={onFocus}
         onDoubleClick={onDoubleClick}
+        onKeyDown={() => {}}
       >
         <FolderIcon className={cn("size-4 shrink-0", colorClass)} />
         {props.isEditing ? (
@@ -113,6 +114,7 @@ export function FileExplorerRow(props: FileExplorerRowProps) {
       onClick={onClick}
       onFocus={onFocus}
       onDoubleClick={onDoubleClick}
+      onKeyDown={() => {}}
     >
       <div className="size-4 shrink-0 rounded-sm border bg-muted" />
       <span className="flex-1 truncate">{receipt.merchantName}</span>

@@ -10,6 +10,16 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { emailOTP, twoFactor } from "better-auth/plugins";
 
+function getOtpSubject(type: string): string {
+  if (type === "forget-password") {
+    return "Reset your password";
+  }
+  if (type === "sign-in") {
+    return "Sign in to Curb";
+  }
+  return "Verify your email";
+}
+
 function parseBrowser(ua: string): string {
   if (ua.includes("Firefox")) {
     return "Firefox";
@@ -65,7 +75,7 @@ export const auth = betterAuth({
   databaseHooks: {
     session: {
       create: {
-        before: async (session) => {
+        before: (session) => {
           const ua = session.userAgent ?? "";
           return {
             data: {
@@ -108,12 +118,7 @@ export const auth = betterAuth({
       async sendVerificationOTP({ email, otp, type }) {
         await sendEmail({
           react: OtpEmail({ otp, type }),
-          subject:
-            type === "forget-password"
-              ? "Reset your password"
-              : (type === "sign-in"
-                ? "Sign in to Curb"
-                : "Verify your email"),
+          subject: getOtpSubject(type),
           to: email,
         });
       },
