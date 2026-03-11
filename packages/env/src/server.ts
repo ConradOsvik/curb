@@ -1,7 +1,8 @@
-import { createEnv } from "@t3-oss/env-core";
-import { config } from "dotenv";
 import { existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
+
+import { createEnv } from "@t3-oss/env-core";
+import { config } from "dotenv";
 import { z } from "zod";
 
 function findRootEnv(): string | undefined {
@@ -27,11 +28,13 @@ export const env = createEnv({
   runtimeEnv: process.env,
   server: {
     BETTER_AUTH_SECRET: z.string().optional(),
+    EMAIL_FROM: z.string().optional(),
     GOOGLE_GENERATIVE_AI_API_KEY: z.string().optional(),
     NATIVE_APP_URL: z.string().optional(),
     NODE_ENV: z
       .enum(["development", "production", "test"])
       .default("development"),
+    RESEND_API_KEY: z.string().optional(),
     S3_ACCESS_KEY_ID: z.string().optional(),
     S3_BUCKET_NAME: z.string().optional(),
     S3_ENDPOINT: z.string().optional(),

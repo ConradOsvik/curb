@@ -1,0 +1,29 @@
+{
+  "name": "@curb/email",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./templates/*": "./src/templates/*.tsx"
+  },
+  "scripts": {
+    "dev": "email dev --dir src/templates --port 3001"
+  },
+  "dependencies": {
+    "@curb/env": "workspace:*",
+    "@react-email/components": "^1.0.8",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "resend": "^4.5.1"
+  },
+  "devDependencies": {
+    "@curb/config": "workspace:*",
+    "@react-email/preview-server": "5.2.9",
+    "@types/node": "^24.10.0",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "react-email": "^5.2.9",
+    "typescript": "catalog:"
+  }
+}

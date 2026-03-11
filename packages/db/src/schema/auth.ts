@@ -12,6 +12,9 @@ export const user = sqliteTable("user", {
   id: text("id").primaryKey(),
   image: text("image"),
   name: text("name").notNull(),
+  twoFactorEnabled: integer("two_factor_enabled", { mode: "boolean" }).default(
+    false
+  ),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" })
     .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
     .$onUpdate(() => /* @__PURE__ */ new Date())
@@ -21,12 +24,15 @@ export const user = sqliteTable("user", {
 export const session = sqliteTable(
   "session",
   {
+    browser: text("browser"),
     createdAt: integer("created_at", { mode: "timestamp_ms" })
       .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
       .notNull(),
+    device: text("device"),
     expiresAt: integer("expires_at", { mode: "timestamp_ms" }).notNull(),
     id: text("id").primaryKey(),
     ipAddress: text("ip_address"),
+    os: text("os"),
     token: text("token").notNull().unique(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" })
       .$onUpdate(() => /* @__PURE__ */ new Date())
@@ -110,10 +116,27 @@ export const passkey = sqliteTable(
   ]
 );
 
+export const twoFactor = sqliteTable(
+  "two_factor",
+  {
+    backupCodes: text("backup_codes").notNull(),
+    id: text("id").primaryKey(),
+    secret: text("secret").notNull(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+  },
+  (table) => [
+    index("twoFactor_secret_idx").on(table.secret),
+    index("twoFactor_userId_idx").on(table.userId),
+  ]
+);
+
 export const userRelations = relations(user, ({ many }) => ({
   accounts: many(account),
   passkeys: many(passkey),
   sessions: many(session),
+  twoFactors: many(twoFactor),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -133,6 +156,13 @@ export const accountRelations = relations(account, ({ one }) => ({
 export const passkeyRelations = relations(passkey, ({ one }) => ({
   user: one(user, {
     fields: [passkey.userId],
+    references: [user.id],
+  }),
+}));
+
+export const twoFactorRelations = relations(twoFactor, ({ one }) => ({
+  user: one(user, {
+    fields: [twoFactor.userId],
     references: [user.id],
   }),
 }));
