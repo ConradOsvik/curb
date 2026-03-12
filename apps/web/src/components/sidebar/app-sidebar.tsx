@@ -4,6 +4,7 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/solid";
 import { Link, useRouterState } from "@tanstack/react-router";
+import { ChevronRight } from "lucide-react";
 
 import {
   Sidebar,
@@ -15,28 +16,21 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
 
 import { NavUser } from "./nav-user";
 
-const navItems = [
-  {
-    icon: DocumentTextIcon,
-    label: "Files",
-    to: "/dashboard",
-  },
-  {
-    icon: TrashIcon,
-    label: "Trash",
-    to: "/trash",
-  },
-  {
-    icon: Cog6ToothIcon,
-    label: "Settings",
-    to: "/settings",
-  },
-] as const;
+const settingsSubItems = [
+  { label: "Profile", to: "/settings" },
+  { label: "Appearance", to: "/settings/appearance" },
+  { label: "Security", to: "/settings/security" },
+  { label: "Danger Zone", to: "/settings/danger-zone" },
+];
 
 interface AppSidebarProps {
   user?: {
@@ -47,8 +41,10 @@ interface AppSidebarProps {
 }
 
 export function AppSidebar({ user }: AppSidebarProps) {
-  const routerState = useRouterState();
-  const currentPath = routerState.location.pathname;
+  const currentPath = useRouterState({
+    select: (s) => s.location.pathname,
+  });
+  const isOnSettings = currentPath.startsWith("/settings");
 
   return (
     <Sidebar collapsible="icon">
@@ -73,18 +69,60 @@ export function AppSidebar({ user }: AppSidebarProps) {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => (
-                <SidebarMenuItem key={item.to}>
-                  <SidebarMenuButton
-                    render={<Link to={item.to} />}
-                    isActive={currentPath === item.to}
-                    tooltip={item.label}
-                  >
-                    <item.icon className="size-4" />
-                    <span>{item.label}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  render={<Link to="/dashboard" />}
+                  isActive={currentPath === "/dashboard"}
+                  tooltip="Files"
+                >
+                  <DocumentTextIcon className="size-4" />
+                  <span>Files</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  render={<Link to="/trash" />}
+                  isActive={currentPath === "/trash"}
+                  tooltip="Trash"
+                >
+                  <TrashIcon className="size-4" />
+                  <span>Trash</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  render={<Link to="/settings" />}
+                  isActive={isOnSettings}
+                  tooltip="Settings"
+                >
+                  <Cog6ToothIcon className="size-4" />
+                  <span>Settings</span>
+                  <ChevronRight
+                    className={cn(
+                      "ml-auto size-4 transition-transform duration-200",
+                      isOnSettings && "rotate-90"
+                    )}
+                  />
+                </SidebarMenuButton>
+                {isOnSettings && (
+                  <SidebarMenuSub>
+                    {settingsSubItems.map((item) => (
+                      <SidebarMenuSubItem key={item.to}>
+                        <SidebarMenuSubButton
+                          render={<Link to={item.to} />}
+                          isActive={
+                            item.to === "/settings"
+                              ? currentPath === "/settings"
+                              : currentPath.startsWith(item.to)
+                          }
+                        >
+                          <span>{item.label}</span>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    ))}
+                  </SidebarMenuSub>
+                )}
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

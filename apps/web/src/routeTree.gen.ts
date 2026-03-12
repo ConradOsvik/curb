@@ -17,9 +17,14 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppTrashRouteImport } from './routes/_app.trash'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
+import { Route as AppEmailVerifiedRouteImport } from './routes/_app.email-verified'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
+import { Route as AppSettingsIndexRouteImport } from './routes/_app.settings.index'
 import { Route as ApiTrpcSplatRouteImport } from './routes/api/trpc/$'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as AppSettingsSecurityRouteImport } from './routes/_app.settings.security'
+import { Route as AppSettingsDangerZoneRouteImport } from './routes/_app.settings.danger-zone'
+import { Route as AppSettingsAppearanceRouteImport } from './routes/_app.settings.appearance'
 import { Route as AppCheckoutSuccessRouteImport } from './routes/_app.checkout.success'
 
 const TwoFactorRoute = TwoFactorRouteImport.update({
@@ -61,10 +66,20 @@ const AppSettingsRoute = AppSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AppRoute,
 } as any)
+const AppEmailVerifiedRoute = AppEmailVerifiedRouteImport.update({
+  id: '/email-verified',
+  path: '/email-verified',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsIndexRoute = AppSettingsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppSettingsRoute,
 } as any)
 const ApiTrpcSplatRoute = ApiTrpcSplatRouteImport.update({
   id: '/api/trpc/$',
@@ -75,6 +90,21 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppSettingsSecurityRoute = AppSettingsSecurityRouteImport.update({
+  id: '/security',
+  path: '/security',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppSettingsDangerZoneRoute = AppSettingsDangerZoneRouteImport.update({
+  id: '/danger-zone',
+  path: '/danger-zone',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppSettingsAppearanceRoute = AppSettingsAppearanceRouteImport.update({
+  id: '/appearance',
+  path: '/appearance',
+  getParentRoute: () => AppSettingsRoute,
 } as any)
 const AppCheckoutSuccessRoute = AppCheckoutSuccessRouteImport.update({
   id: '/checkout/success',
@@ -89,11 +119,16 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/two-factor': typeof TwoFactorRoute
   '/dashboard': typeof AppDashboardRoute
-  '/settings': typeof AppSettingsRoute
+  '/email-verified': typeof AppEmailVerifiedRoute
+  '/settings': typeof AppSettingsRouteWithChildren
   '/trash': typeof AppTrashRoute
   '/checkout/success': typeof AppCheckoutSuccessRoute
+  '/settings/appearance': typeof AppSettingsAppearanceRoute
+  '/settings/danger-zone': typeof AppSettingsDangerZoneRoute
+  '/settings/security': typeof AppSettingsSecurityRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
+  '/settings/': typeof AppSettingsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -102,11 +137,15 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/two-factor': typeof TwoFactorRoute
   '/dashboard': typeof AppDashboardRoute
-  '/settings': typeof AppSettingsRoute
+  '/email-verified': typeof AppEmailVerifiedRoute
   '/trash': typeof AppTrashRoute
   '/checkout/success': typeof AppCheckoutSuccessRoute
+  '/settings/appearance': typeof AppSettingsAppearanceRoute
+  '/settings/danger-zone': typeof AppSettingsDangerZoneRoute
+  '/settings/security': typeof AppSettingsSecurityRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
+  '/settings': typeof AppSettingsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -117,11 +156,16 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/two-factor': typeof TwoFactorRoute
   '/_app/dashboard': typeof AppDashboardRoute
-  '/_app/settings': typeof AppSettingsRoute
+  '/_app/email-verified': typeof AppEmailVerifiedRoute
+  '/_app/settings': typeof AppSettingsRouteWithChildren
   '/_app/trash': typeof AppTrashRoute
   '/_app/checkout/success': typeof AppCheckoutSuccessRoute
+  '/_app/settings/appearance': typeof AppSettingsAppearanceRoute
+  '/_app/settings/danger-zone': typeof AppSettingsDangerZoneRoute
+  '/_app/settings/security': typeof AppSettingsSecurityRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
+  '/_app/settings/': typeof AppSettingsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -132,11 +176,16 @@ export interface FileRouteTypes {
     | '/signup'
     | '/two-factor'
     | '/dashboard'
+    | '/email-verified'
     | '/settings'
     | '/trash'
     | '/checkout/success'
+    | '/settings/appearance'
+    | '/settings/danger-zone'
+    | '/settings/security'
     | '/api/auth/$'
     | '/api/trpc/$'
+    | '/settings/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -145,11 +194,15 @@ export interface FileRouteTypes {
     | '/signup'
     | '/two-factor'
     | '/dashboard'
-    | '/settings'
+    | '/email-verified'
     | '/trash'
     | '/checkout/success'
+    | '/settings/appearance'
+    | '/settings/danger-zone'
+    | '/settings/security'
     | '/api/auth/$'
     | '/api/trpc/$'
+    | '/settings'
   id:
     | '__root__'
     | '/'
@@ -159,11 +212,16 @@ export interface FileRouteTypes {
     | '/signup'
     | '/two-factor'
     | '/_app/dashboard'
+    | '/_app/email-verified'
     | '/_app/settings'
     | '/_app/trash'
     | '/_app/checkout/success'
+    | '/_app/settings/appearance'
+    | '/_app/settings/danger-zone'
+    | '/_app/settings/security'
     | '/api/auth/$'
     | '/api/trpc/$'
+    | '/_app/settings/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -235,12 +293,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/email-verified': {
+      id: '/_app/email-verified'
+      path: '/email-verified'
+      fullPath: '/email-verified'
+      preLoaderRoute: typeof AppEmailVerifiedRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/dashboard': {
       id: '/_app/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/_app/settings/': {
+      id: '/_app/settings/'
+      path: '/'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof AppSettingsIndexRouteImport
+      parentRoute: typeof AppSettingsRoute
     }
     '/api/trpc/$': {
       id: '/api/trpc/$'
@@ -256,6 +328,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/settings/security': {
+      id: '/_app/settings/security'
+      path: '/security'
+      fullPath: '/settings/security'
+      preLoaderRoute: typeof AppSettingsSecurityRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/_app/settings/danger-zone': {
+      id: '/_app/settings/danger-zone'
+      path: '/danger-zone'
+      fullPath: '/settings/danger-zone'
+      preLoaderRoute: typeof AppSettingsDangerZoneRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/_app/settings/appearance': {
+      id: '/_app/settings/appearance'
+      path: '/appearance'
+      fullPath: '/settings/appearance'
+      preLoaderRoute: typeof AppSettingsAppearanceRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
     '/_app/checkout/success': {
       id: '/_app/checkout/success'
       path: '/checkout/success'
@@ -266,16 +359,36 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AppSettingsRouteChildren {
+  AppSettingsAppearanceRoute: typeof AppSettingsAppearanceRoute
+  AppSettingsDangerZoneRoute: typeof AppSettingsDangerZoneRoute
+  AppSettingsSecurityRoute: typeof AppSettingsSecurityRoute
+  AppSettingsIndexRoute: typeof AppSettingsIndexRoute
+}
+
+const AppSettingsRouteChildren: AppSettingsRouteChildren = {
+  AppSettingsAppearanceRoute: AppSettingsAppearanceRoute,
+  AppSettingsDangerZoneRoute: AppSettingsDangerZoneRoute,
+  AppSettingsSecurityRoute: AppSettingsSecurityRoute,
+  AppSettingsIndexRoute: AppSettingsIndexRoute,
+}
+
+const AppSettingsRouteWithChildren = AppSettingsRoute._addFileChildren(
+  AppSettingsRouteChildren,
+)
+
 interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRoute
-  AppSettingsRoute: typeof AppSettingsRoute
+  AppEmailVerifiedRoute: typeof AppEmailVerifiedRoute
+  AppSettingsRoute: typeof AppSettingsRouteWithChildren
   AppTrashRoute: typeof AppTrashRoute
   AppCheckoutSuccessRoute: typeof AppCheckoutSuccessRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
-  AppSettingsRoute: AppSettingsRoute,
+  AppEmailVerifiedRoute: AppEmailVerifiedRoute,
+  AppSettingsRoute: AppSettingsRouteWithChildren,
   AppTrashRoute: AppTrashRoute,
   AppCheckoutSuccessRoute: AppCheckoutSuccessRoute,
 }

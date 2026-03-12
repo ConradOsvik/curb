@@ -102,6 +102,34 @@ export const auth = betterAuth({
         },
       },
     },
+    user: {
+      create: {
+        before: (user) => {
+          if (!user.image && user.name) {
+            const colors = [
+              "f44336",
+              "e91e63",
+              "9c27b0",
+              "673ab7",
+              "3f51b5",
+              "2196f3",
+              "03a9f4",
+              "00bcd4",
+              "009688",
+              "4caf50",
+              "ff9800",
+              "ff5722",
+              "795548",
+              "607d8b",
+            ];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const image = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=${color}&color=fff&format=svg&bold=true&size=128`;
+            return Promise.resolve({ data: { ...user, image } });
+          }
+          return Promise.resolve({ data: user });
+        },
+      },
+    },
   },
   emailAndPassword: {
     enabled: true,
@@ -116,7 +144,7 @@ export const auth = betterAuth({
   },
   emailVerification: {
     autoSignInAfterVerification: true,
-    callbackURL: "/settings?verified=true",
+    callbackURL: "/email-verified",
     sendOnSignUp: true,
     sendVerificationEmail: async ({ user, url }) => {
       await sendEmail({
@@ -194,6 +222,18 @@ export const auth = betterAuth({
   ],
   user: {
     changeEmail: {
+      enabled: true,
+    },
+    deleteUser: {
+      beforeDelete: async (user) => {
+        try {
+          await polarClient.customers.deleteExternal({
+            externalId: user.id,
+          });
+        } catch {
+          // Customer may not exist in Polar
+        }
+      },
       enabled: true,
     },
   },

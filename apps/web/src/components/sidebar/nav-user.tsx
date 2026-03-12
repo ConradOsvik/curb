@@ -55,9 +55,9 @@ export function NavUser({
         size="lg"
         className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
       >
-        <Avatar className="h-8 w-8 rounded-md">
+        <Avatar className="h-8 w-8">
           <AvatarImage src={user.avatar} alt={user.name} />
-          <AvatarFallback className="rounded-md text-xs">
+          <AvatarFallback className="text-xs">
             {getInitials(user.name)}
           </AvatarFallback>
         </Avatar>
@@ -110,7 +110,7 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={handleSignOut}>
+            <DropdownMenuItem onSelect={() => void handleSignOut()}>
               <ArrowRightStartOnRectangleIcon />
               Sign out
             </DropdownMenuItem>

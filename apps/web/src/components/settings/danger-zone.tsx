@@ -1,5 +1,4 @@
 import { authClient } from "@curb/auth/client";
-import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, Trash2 } from "lucide-react";
 import { useCallback, useState } from "react";
@@ -19,28 +18,26 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useTRPC } from "@/lib/trpc";
 
 export function DangerZone({ userName }: { userName: string }) {
   const navigate = useNavigate();
-  const trpc = useTRPC();
   const [deleteConfirmName, setDeleteConfirmName] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-
-  const deleteAccount = useMutation(trpc.user.deleteAccount.mutationOptions());
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDeleteAccount = useCallback(async () => {
+    setIsDeleting(true);
     try {
-      await deleteAccount.mutateAsync({ confirmName: deleteConfirmName });
+      await authClient.deleteUser({
+        callbackURL: "/login",
+      });
       toast.success("Account deleted");
-      await authClient.signOut();
-      navigate({ to: "/login" });
+      void navigate({ to: "/login" });
     } catch {
-      toast.error(
-        "Failed to delete account. Make sure you typed your name correctly."
-      );
+      toast.error("Failed to delete account.");
+      setIsDeleting(false);
     }
-  }, [deleteAccount, deleteConfirmName, navigate]);
+  }, [navigate]);
 
   const isDeleteConfirmed = deleteConfirmName === userName;
 
@@ -99,10 +96,10 @@ export function DangerZone({ userName }: { userName: string }) {
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
                 variant="destructive"
-                disabled={!isDeleteConfirmed || deleteAccount.isPending}
-                onClick={handleDeleteAccount}
+                disabled={!isDeleteConfirmed || isDeleting}
+                onClick={() => void handleDeleteAccount()}
               >
-                {deleteAccount.isPending ? "Deleting..." : "Delete my account"}
+                {isDeleting ? "Deleting..." : "Delete my account"}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

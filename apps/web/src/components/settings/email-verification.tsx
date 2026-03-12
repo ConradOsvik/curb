@@ -1,7 +1,6 @@
 import { authClient } from "@curb/auth/client";
-import { useRouter, useSearch } from "@tanstack/react-router";
 import { BadgeCheck, MailWarning } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -14,21 +13,13 @@ export function EmailVerification({
   email: string;
   emailVerified: boolean;
 }) {
-  const router = useRouter();
-  const search = useSearch({ strict: false }) as Record<string, unknown>;
   const [isSending, setIsSending] = useState(false);
-
-  useEffect(() => {
-    if (search.verified === "true") {
-      router.invalidate();
-    }
-  }, [search.verified, router]);
 
   const handleResend = useCallback(async () => {
     setIsSending(true);
     try {
       const { error } = await authClient.sendVerificationEmail({
-        callbackURL: "/settings?verified=true",
+        callbackURL: "/email-verified",
         email,
       });
       if (error) {
@@ -68,7 +59,11 @@ export function EmailVerification({
           Your email is not verified
         </p>
       </div>
-      <Button variant="outline" onClick={handleResend} disabled={isSending}>
+      <Button
+        variant="outline"
+        onClick={() => void handleResend()}
+        disabled={isSending}
+      >
         {isSending ? "Sending..." : "Resend verification"}
       </Button>
     </div>

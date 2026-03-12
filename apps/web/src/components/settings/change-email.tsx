@@ -3,6 +3,7 @@ import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -44,7 +45,7 @@ export function ChangeEmail({ currentEmail }: { currentEmail: string }) {
         </p>
       </div>
       {!sent && (
-        <div className="flex gap-2">
+        <ButtonGroup className="w-full">
           <Input
             type="email"
             placeholder="New email address"
@@ -52,15 +53,14 @@ export function ChangeEmail({ currentEmail }: { currentEmail: string }) {
             onChange={(e) => setNewEmail(e.target.value)}
           />
           <Button
-            onClick={handleSubmit}
+            onClick={() => void handleSubmit()}
             disabled={
               !newEmail.trim() || newEmail === currentEmail || isSubmitting
             }
-            className="shrink-0"
           >
             {isSubmitting ? "Sending..." : "Change"}
           </Button>
-        </div>
+        </ButtonGroup>
       )}
       {sent && (
         <Button
