@@ -1,4 +1,11 @@
 services:
+  libsql:
+    image: ghcr.io/tursodatabase/libsql-server:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - libsql-data:/var/lib/sqld
+
   minio:
     image: minio/minio
     ports:
@@ -28,4 +35,5 @@ services:
       "
 
 volumes:
+  libsql-data:
   minio-data:
