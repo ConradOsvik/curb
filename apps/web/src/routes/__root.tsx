@@ -14,6 +14,7 @@ import type { TRPCClient } from "@trpc/client";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { getTheme } from "@/lib/theme";
 import { TRPCProvider } from "@/lib/trpc";
 
 import appCss from "../index.css?url";
@@ -24,14 +25,12 @@ export interface RouterAppContext {
 }
 
 export const Route = createRootRouteWithContext<RouterAppContext>()({
+  beforeLoad: async () => {
+    const theme = await getTheme();
+    return { theme };
+  },
   component: RootDocument,
   head: () => ({
-    links: [
-      {
-        href: appCss,
-        rel: "stylesheet",
-      },
-    ],
     meta: [
       {
         charSet: "utf8",
@@ -48,22 +47,25 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 });
 
 function RootDocument() {
-  const { queryClient, trpcClient } = useRouteContext({ from: Route.id });
+  const { queryClient, trpcClient, theme } = useRouteContext({
+    from: Route.id,
+  });
   return (
     <QueryClientProvider client={queryClient}>
       <TRPCProvider trpcClient={trpcClient} queryClient={queryClient}>
-        <ThemeProvider defaultTheme="dark" storageKey="ui-theme">
+        <ThemeProvider defaultTheme={theme}>
           <html lang="en" suppressHydrationWarning>
             <head>
+              <link rel="stylesheet" href={appCss} />
               <script
                 // oxlint-disable-next-line react/no-danger
                 dangerouslySetInnerHTML={{
                   __html: `
                   (function() {
-                    const storageKey = 'ui-theme';
-                    const theme = localStorage.getItem(storageKey);
-                    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                    const isDark = theme === 'dark' || (theme !== 'light' && systemDark);
+                    var m = document.cookie.match(/(?:^|;\\s*)ui-theme=(\\w+)/);
+                    var theme = m && m[1];
+                    var systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    var isDark = theme === 'dark' || (theme !== 'light' && systemDark);
                     document.documentElement.classList.toggle('dark', isDark);
                   })();
                 `,

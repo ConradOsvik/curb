@@ -3,10 +3,12 @@ import { createContext, use, useEffect, useMemo, useState } from "react";
 export type ResolvedTheme = "dark" | "light";
 export type Theme = ResolvedTheme | "system";
 
+const COOKIE_KEY = "ui-theme";
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 year
+
 interface ThemeProviderProps {
   children: React.ReactNode;
   defaultTheme?: Theme;
-  storageKey?: string;
 }
 
 interface ThemeProviderState {
@@ -23,12 +25,7 @@ const initialState: ThemeProviderState = {
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 
-const isBrowser = typeof window !== "undefined";
-
 function getSystemTheme(): ResolvedTheme {
-  if (!isBrowser) {
-    return "light";
-  }
   return window.matchMedia("(prefers-color-scheme: dark)").matches
     ? "dark"
     : "light";
@@ -37,23 +34,13 @@ function getSystemTheme(): ResolvedTheme {
 export function ThemeProvider({
   children,
   defaultTheme = "system",
-  storageKey = "ui-theme",
 }: ThemeProviderProps) {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (!isBrowser) {
-      return defaultTheme;
-    }
-    return (localStorage.getItem(storageKey) as Theme) || defaultTheme;
-  });
-
+  const [theme, setThemeState] = useState<Theme>(defaultTheme);
   const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(() => {
-    if (!isBrowser) {
+    if (defaultTheme === "system") {
       return "light";
     }
-    if (theme === "system") {
-      return getSystemTheme();
-    }
-    return theme as ResolvedTheme;
+    return defaultTheme;
   });
 
   useEffect(() => {
@@ -61,8 +48,9 @@ export function ThemeProvider({
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
     function updateTheme() {
-      const resolved = theme === "system" ? getSystemTheme() : theme;
-      setResolvedTheme(resolved as ResolvedTheme);
+      const resolved =
+        theme === "system" ? getSystemTheme() : (theme as ResolvedTheme);
+      setResolvedTheme(resolved);
       root.classList.remove("light", "dark");
       root.classList.add(resolved);
     }
@@ -76,12 +64,13 @@ export function ThemeProvider({
     () => ({
       resolvedTheme,
       setTheme: (newTheme: Theme) => {
-        localStorage.setItem(storageKey, newTheme);
+        // oxlint-disable-next-line unicorn/no-document-cookie -- simple cookie set, no library needed
+        document.cookie = `${COOKIE_KEY}=${newTheme}; path=/; max-age=${COOKIE_MAX_AGE}; SameSite=Lax`;
         setThemeState(newTheme);
       },
       theme,
     }),
-    [theme, resolvedTheme, storageKey]
+    [theme, resolvedTheme]
   );
 
   return <ThemeProviderContext value={value}>{children}</ThemeProviderContext>;
