@@ -14,6 +14,9 @@ export default defineConfig({
     tanstackStart(),
     viteReact(),
   ],
+  preview: {
+    port: 3000,
+  },
   server: {
     port: 3000,
   },

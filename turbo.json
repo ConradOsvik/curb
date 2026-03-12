@@ -1,7 +1,6 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
-  "globalEnv": ["TURSO_DATABASE_URL", "TURSO_AUTH_TOKEN"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
@@ -39,6 +38,11 @@
     },
     "dev": {
       "dependsOn": ["@curb/db#db:push"],
+      "cache": false,
+      "persistent": true
+    },
+    "preview": {
+      "dependsOn": ["@curb/db#db:push", "build"],
       "cache": false,
       "persistent": true
     },
