@@ -6,6 +6,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 const routeLabels: Record<string, string> = {
   "/dashboard": "Receipts",
   "/settings": "Settings",
+  "/trash": "Trash",
 };
 
 export function Header() {
