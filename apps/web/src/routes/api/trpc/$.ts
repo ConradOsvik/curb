@@ -8,6 +8,13 @@ async function createContext(request: Request): Promise<Context> {
   const session = await auth.api.getSession({ headers: request.headers });
   return {
     db,
+    session: session?.session
+      ? {
+          expiresAt: session.session.expiresAt,
+          id: session.session.id,
+          token: session.session.token,
+        }
+      : null,
     user: session?.user
       ? {
           email: session.user.email,

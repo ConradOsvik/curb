@@ -9,6 +9,11 @@ export interface Context {
     email: string;
     image?: string | null;
   } | null;
+  session: {
+    id: string;
+    token: string;
+    expiresAt: Date;
+  } | null;
 }
 
 const t = initTRPC.context<Context>().create();
@@ -17,8 +22,8 @@ export const { router } = t;
 export const publicProcedure = t.procedure;
 
 export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
-  if (!ctx.user) {
+  if (!ctx.user || !ctx.session) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
-  return await next({ ctx: { ...ctx, user: ctx.user } });
+  return await next({ ctx: { ...ctx, session: ctx.session, user: ctx.user } });
 });

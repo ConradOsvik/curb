@@ -21,14 +21,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useTRPC } from "@/lib/trpc";
 
-export function DangerZone() {
-  const { data: sessionData } = authClient.useSession();
+export function DangerZone({ userName }: { userName: string }) {
   const navigate = useNavigate();
   const trpc = useTRPC();
   const [deleteConfirmName, setDeleteConfirmName] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-
-  const userName = sessionData?.user?.name ?? "";
 
   const deleteAccount = useMutation(trpc.user.deleteAccount.mutationOptions());
 

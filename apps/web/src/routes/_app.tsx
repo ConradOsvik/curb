@@ -11,7 +11,7 @@ export const Route = createFileRoute("/_app")({
     if (!session) {
       throw redirect({ search: { redirect: location.href }, to: "/login" });
     }
-    return { user: session.user };
+    return { session: session.session, user: session.user };
   },
   component: DashboardLayout,
 });

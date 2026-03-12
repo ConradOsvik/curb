@@ -17,22 +17,13 @@ import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { getSession, listPasskeys, listSessions } from "@/lib/session";
+import { listPasskeys, listSessions } from "@/lib/session";
 
 export const Route = createFileRoute("/_app/settings")({
   component: SettingsPage,
   loader: ({ context }) => {
     context.queryClient.prefetchQuery({
-      queryFn: async () => {
-        const [sessions, current] = await Promise.all([
-          listSessions(),
-          getSession(),
-        ]);
-        return {
-          currentToken: current?.session.token ?? null,
-          sessions,
-        };
-      },
+      queryFn: () => listSessions(),
       queryKey: ["sessions"],
     });
     context.queryClient.prefetchQuery({
@@ -43,7 +34,7 @@ export const Route = createFileRoute("/_app/settings")({
 });
 
 function SettingsPage() {
-  const { user } = Route.useRouteContext();
+  const { user, session } = Route.useRouteContext();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const [isRegistering, setIsRegistering] = useState(false);
@@ -70,7 +61,7 @@ function SettingsPage() {
   }, [navigate]);
 
   return (
-    <div className="h-full overflow-y-auto">
+    <div className="h-full overflow-y-auto overscroll-contain">
       <div className="mx-auto max-w-2xl space-y-6 p-6">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
@@ -125,7 +116,7 @@ function SettingsPage() {
                 emailVerified={user.emailVerified}
               />
               <Separator />
-              <ChangeEmail />
+              <ChangeEmail currentEmail={user.email} />
               <Separator />
               <ChangePassword />
             </div>
@@ -151,7 +142,7 @@ function SettingsPage() {
           {/* Sessions */}
           <div className="rounded-lg border p-4">
             <Suspense fallback={<SessionsSkeleton />}>
-              <SessionsList />
+              <SessionsList currentToken={session.token} />
             </Suspense>
           </div>
 
@@ -172,7 +163,7 @@ function SettingsPage() {
           </div>
 
           {/* Danger Zone */}
-          <DangerZone />
+          <DangerZone userName={user.name} />
         </div>
       </div>
     </div>

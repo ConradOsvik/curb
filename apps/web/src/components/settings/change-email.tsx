@@ -6,13 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export function ChangeEmail() {
-  const { data: sessionData } = authClient.useSession();
+export function ChangeEmail({ currentEmail }: { currentEmail: string }) {
   const [newEmail, setNewEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sent, setSent] = useState(false);
-
-  const currentEmail = sessionData?.user?.email ?? "";
 
   const handleSubmit = useCallback(async () => {
     if (!newEmail.trim() || newEmail === currentEmail) {

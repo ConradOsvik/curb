@@ -17,11 +17,9 @@ export function EmailVerification({
   const router = useRouter();
   const search = useSearch({ strict: false }) as Record<string, unknown>;
   const [isSending, setIsSending] = useState(false);
-  const [isVerified, setIsVerified] = useState(emailVerified);
 
   useEffect(() => {
     if (search.verified === "true") {
-      setIsVerified(true);
       router.invalidate();
     }
   }, [search.verified, router]);
@@ -45,7 +43,7 @@ export function EmailVerification({
     }
   }, [email]);
 
-  if (isVerified) {
+  if (emailVerified) {
     return (
       <div className="flex items-center justify-between">
         <div className="space-y-1">

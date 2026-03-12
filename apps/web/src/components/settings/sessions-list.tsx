@@ -5,7 +5,7 @@ import { useCallback } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { getSession, listSessions } from "@/lib/session";
+import { listSessions } from "@/lib/session";
 
 function getDeviceIcon(device: string | null | undefined) {
   if (device === "mobile") {
@@ -14,22 +14,11 @@ function getDeviceIcon(device: string | null | undefined) {
   return Laptop;
 }
 
-export function SessionsList() {
-  const { data, refetch } = useSuspenseQuery({
-    queryFn: async () => {
-      const [sessions, current] = await Promise.all([
-        listSessions(),
-        getSession(),
-      ]);
-      return {
-        currentToken: current?.session.token ?? null,
-        sessions,
-      };
-    },
+export function SessionsList({ currentToken }: { currentToken: string }) {
+  const { data: sessions, refetch } = useSuspenseQuery({
+    queryFn: () => listSessions(),
     queryKey: ["sessions"],
   });
-
-  const { sessions, currentToken } = data;
 
   const handleRevoke = useCallback(
     async (token: string) => {
