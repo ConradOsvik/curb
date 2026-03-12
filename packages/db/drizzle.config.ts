@@ -22,16 +22,12 @@ function findRootEnv(): string | undefined {
 
 config({ override: true, path: findRootEnv() });
 
-const isLocal = !process.env.TURSO_AUTH_TOKEN;
-
 export default defineConfig({
-  dbCredentials: isLocal
-    ? { url: process.env.TURSO_DATABASE_URL ?? "file:local.db" }
-    : {
-        authToken: process.env.TURSO_AUTH_TOKEN ?? "",
-        url: process.env.TURSO_DATABASE_URL ?? "",
-      },
-  dialect: isLocal ? "sqlite" : "turso",
+  dbCredentials: {
+    authToken: process.env.DATABASE_TOKEN,
+    url: process.env.DATABASE_URL ?? "",
+  },
+  dialect: "turso",
   out: "./drizzle",
   schema: "./src/schema",
 });

@@ -1,12 +1,12 @@
 import { env } from "@curb/env/server";
-import { createClient } from "@libsql/client";
+import { createClient } from "@libsql/client/web";
 import { drizzle } from "drizzle-orm/libsql";
 
 import * as schema from "./schema/index";
 
 const client = createClient({
-  authToken: env.TURSO_AUTH_TOKEN,
-  url: env.TURSO_DATABASE_URL || `file:${import.meta.dirname}/../local.db`,
+  authToken: env.DATABASE_TOKEN,
+  url: env.DATABASE_URL,
 });
 
 export const db = drizzle(client, { schema });

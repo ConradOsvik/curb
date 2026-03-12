@@ -27,7 +27,10 @@ export const env = createEnv({
   emptyStringAsUndefined: true,
   runtimeEnv: process.env,
   server: {
-    BETTER_AUTH_SECRET: z.string().optional(),
+    BETTER_AUTH_SECRET: z.string(),
+    BETTER_AUTH_URL: z.url(),
+    DATABASE_TOKEN: z.string().optional(),
+    DATABASE_URL: z.string(),
     EMAIL_FROM: z.string().optional(),
     GOOGLE_GENERATIVE_AI_API_KEY: z.string().optional(),
     NATIVE_APP_URL: z.string().optional(),
@@ -44,7 +47,5 @@ export const env = createEnv({
     S3_PUBLIC_URL: z.string().optional(),
     S3_SECRET_ACCESS_KEY: z.string().optional(),
     SITE_URL: z.string().optional(),
-    TURSO_AUTH_TOKEN: z.string().optional(),
-    TURSO_DATABASE_URL: z.string().optional(),
   },
 });
