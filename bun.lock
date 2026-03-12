@@ -83,6 +83,7 @@
         "@dnd-kit/sortable": "^10.0.0",
         "@dnd-kit/utilities": "^3.2.2",
         "@heroicons/react": "^2.2.0",
+        "@libsql/client": "^0.14.0",
         "@tailwindcss/vite": "^4.1.8",
         "@tanstack/react-form": "^1.23.5",
         "@tanstack/react-hotkeys": "^0.4.0",
