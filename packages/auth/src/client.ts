@@ -1,3 +1,17 @@
-export { passkeyClient } from "@better-auth/passkey/client";
-export { createAuthClient } from "better-auth/react";
-export { emailOTPClient, twoFactorClient } from "better-auth/client/plugins";
+import { passkeyClient } from "@better-auth/passkey/client";
+import { polarClient } from "@polar-sh/better-auth/client";
+import { emailOTPClient, twoFactorClient } from "better-auth/client/plugins";
+import { createAuthClient } from "better-auth/react";
+
+export const authClient = createAuthClient({
+  plugins: [
+    passkeyClient(),
+    emailOTPClient(),
+    twoFactorClient({
+      onTwoFactorRedirect() {
+        window.location.href = "/two-factor";
+      },
+    }),
+    polarClient(),
+  ],
+});

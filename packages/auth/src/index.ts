@@ -6,9 +6,18 @@ import OtpEmail from "@curb/email/templates/otp";
 import ResetPasswordEmail from "@curb/email/templates/reset-password";
 import VerificationEmail from "@curb/email/templates/verification";
 import { env } from "@curb/env/server";
+import {
+  checkout,
+  polar,
+  portal,
+  usage,
+  webhooks,
+} from "@polar-sh/better-auth";
+import { Polar } from "@polar-sh/sdk";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { emailOTP, twoFactor } from "better-auth/plugins";
+import { tanstackStartCookies } from "better-auth/tanstack-start";
 
 function getOtpSubject(type: string): string {
   if (type === "forget-password") {
@@ -69,6 +78,11 @@ function parseDevice(ua: string): string {
   return "desktop";
 }
 
+const polarClient = new Polar({
+  accessToken: env.POLAR_ACCESS_TOKEN,
+  server: "sandbox",
+});
+
 export const auth = betterAuth({
   baseURL: env.SITE_URL ?? "http://localhost:3000",
   database: drizzleAdapter(db, { provider: "sqlite" }),
@@ -77,14 +91,14 @@ export const auth = betterAuth({
       create: {
         before: (session) => {
           const ua = session.userAgent ?? "";
-          return {
+          return Promise.resolve({
             data: {
               ...session,
               browser: parseBrowser(ua),
               device: parseDevice(ua),
               os: parseOS(ua),
             },
-          };
+          });
         },
       },
     },
@@ -135,6 +149,32 @@ export const auth = betterAuth({
         },
       },
     }),
+    polar({
+      client: polarClient,
+      createCustomerOnSignUp: true,
+      use: [
+        checkout({
+          authenticatedUsersOnly: true,
+          products: [
+            {
+              productId: "762e3207-141e-477e-8a66-48267bdc27e6",
+              slug: "pro",
+            },
+            {
+              productId: "93178adb-46f8-43b1-bb1a-b6c5e22ef9da",
+              slug: "max",
+            },
+          ],
+          successUrl: env.POLAR_SUCCESS_URL,
+        }),
+        portal(),
+        usage(),
+        webhooks({
+          secret: env.POLAR_WEBHOOK_SECRET,
+        }),
+      ],
+    }),
+    tanstackStartCookies(),
   ],
   session: {
     additionalFields: {

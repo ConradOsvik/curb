@@ -1,3 +1,4 @@
+import { authClient } from "@curb/auth/client";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Fingerprint, Trash2 } from "lucide-react";
 import { useCallback } from "react";
@@ -5,7 +6,6 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { authClient } from "@/lib/auth-client";
 
 interface Passkey {
   id: string;

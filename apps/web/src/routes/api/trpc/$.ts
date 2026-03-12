@@ -1,8 +1,8 @@
 import { appRouter, type Context } from "@curb/api";
+import { auth } from "@curb/auth";
+import { db } from "@curb/db";
 import { createFileRoute } from "@tanstack/react-router";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
-
-import { auth, db } from "@/lib/auth-server";
 
 async function createContext(request: Request): Promise<Context> {
   const session = await auth.api.getSession({ headers: request.headers });

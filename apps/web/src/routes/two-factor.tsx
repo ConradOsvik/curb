@@ -1,3 +1,4 @@
+import { authClient } from "@curb/auth/client";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, KeyRound, Mail, ShieldCheck } from "lucide-react";
 import { useCallback, useState } from "react";
@@ -6,7 +7,6 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { authClient } from "@/lib/auth-client";
 
 function getMethodDescription(method: string): string {
   if (method === "totp") {

@@ -1,27 +1,32 @@
+import { authClient } from "@curb/auth/client";
 import { useForm } from "@tanstack/react-form";
-import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useCallback, useEffect, type FormEvent } from "react";
+import {
+  Link,
+  createFileRoute,
+  redirect,
+  useNavigate,
+} from "@tanstack/react-router";
+import { useCallback, type FormEvent } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { authClient } from "@/lib/auth-client";
+import { getSession } from "@/lib/session";
 
 export const Route = createFileRoute("/signup")({
+  beforeLoad: async () => {
+    const session = await getSession();
+    if (session) {
+      throw redirect({ to: "/dashboard" });
+    }
+  },
   component: SignupPage,
 });
 
 function SignupPage() {
   const navigate = useNavigate();
-  const { data: session, isPending } = authClient.useSession();
-
-  useEffect(() => {
-    if (!isPending && session) {
-      navigate({ search: {}, to: "/dashboard" });
-    }
-  }, [isPending, session, navigate]);
 
   const form = useForm({
     defaultValues: {

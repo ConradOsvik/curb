@@ -1,7 +1,13 @@
+import { authClient } from "@curb/auth/client";
 import { useForm } from "@tanstack/react-form";
-import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import {
+  Link,
+  createFileRoute,
+  redirect,
+  useNavigate,
+} from "@tanstack/react-router";
 import { Fingerprint } from "lucide-react";
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -9,22 +15,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { authClient } from "@/lib/auth-client";
+import { getSession } from "@/lib/session";
 
 export const Route = createFileRoute("/login")({
+  beforeLoad: async () => {
+    const session = await getSession();
+    if (session) {
+      throw redirect({ to: "/dashboard" });
+    }
+  },
   component: LoginPage,
 });
 
 function LoginPage() {
   const navigate = useNavigate();
   const [isPasskeyLoading, setIsPasskeyLoading] = useState(false);
-  const { data: session, isPending } = authClient.useSession();
-
-  useEffect(() => {
-    if (!isPending && session) {
-      navigate({ search: {}, to: "/dashboard" });
-    }
-  }, [isPending, session, navigate]);
 
   const form = useForm({
     defaultValues: {

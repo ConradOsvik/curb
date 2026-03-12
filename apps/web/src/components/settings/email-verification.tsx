@@ -1,3 +1,4 @@
+import { authClient } from "@curb/auth/client";
 import { useSearch } from "@tanstack/react-router";
 import { BadgeCheck, MailWarning } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -5,7 +6,6 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { authClient } from "@/lib/auth-client";
 
 export function EmailVerification() {
   const { data: sessionData, refetch } = authClient.useSession();

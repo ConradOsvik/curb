@@ -1,3 +1,4 @@
+import { authClient } from "@curb/auth/client";
 import {
   ArrowRightStartOnRectangleIcon,
   ChevronUpDownIcon,
@@ -22,7 +23,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { authClient } from "@/lib/auth-client";
 
 function getInitials(name: string): string {
   return name

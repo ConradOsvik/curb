@@ -1,10 +1,10 @@
+import { authClient } from "@curb/auth/client";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Globe, Laptop, Smartphone } from "lucide-react";
 import { useCallback } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { authClient } from "@/lib/auth-client";
 
 interface Session {
   id: string;
