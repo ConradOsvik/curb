@@ -4,6 +4,7 @@ import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
 
+import ErrorComponent from "./components/error";
 import Loader from "./components/loader";
 
 import "./index.css";
@@ -24,6 +25,7 @@ export function getRouter() {
 
   const router = createTanStackRouter({
     context: { queryClient, trpcClient },
+    defaultErrorComponent: ErrorComponent,
     defaultNotFoundComponent: () => <div>Not Found</div>,
     defaultPendingComponent: () => <Loader />,
     defaultPreload: "intent",
