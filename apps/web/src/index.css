@@ -126,6 +126,6 @@
     @apply font-sans bg-background text-foreground antialiased;
   }
   html {
-    @apply font-sans overscroll-none;
+    @apply font-sans overflow-hidden;
   }
 }
