@@ -1,18 +1,31 @@
-import type { Receipt } from "@curb/db/types";
-import { useHotkey } from "@tanstack/react-hotkeys";
+import type { Folder, ReceiptWithItems } from "@curb/api";
+import { useDroppable } from "@dnd-kit/core";
+import {
+  ArrowUpTrayIcon,
+  DocumentTextIcon,
+  FolderIcon,
+  FolderPlusIcon,
+} from "@heroicons/react/24/solid";
 import { createFileRoute } from "@tanstack/react-router";
+import { zodValidator } from "@tanstack/zod-adapter";
+import { AnimatePresence } from "motion/react";
 import { useCallback, useMemo, useRef, useState } from "react";
+import { z } from "zod";
 
 import { BackgroundContextMenu } from "@/components/dashboard/context-menus/background-context-menu";
+import { ItemContextMenu } from "@/components/dashboard/context-menus/item-context-menu";
 import { CreateFolderDialog } from "@/components/dashboard/dialogs/create-folder-dialog";
-import { ReceiptDetailModal } from "@/components/dashboard/dialogs/receipt-detail-modal";
-import { FileExplorerDndContext } from "@/components/dashboard/dnd/file-explorer-dnd-context";
-import { SelectionBox } from "@/components/dashboard/dnd/selection-box";
-import { useSelection } from "@/components/dashboard/dnd/use-selection";
-import { FileExplorerCardGrid } from "@/components/dashboard/file-explorer/file-explorer-card-grid";
-import { FileExplorerTable } from "@/components/dashboard/file-explorer/file-explorer-table";
-import { FileExplorerToolbar } from "@/components/dashboard/file-explorer/file-explorer-toolbar";
+import { ReceiptDetailPanel } from "@/components/dashboard/dialogs/receipt-detail-modal";
+import { DraggableItem } from "@/components/dashboard/dnd/draggable-item";
+import { DroppableFolder } from "@/components/dashboard/dnd/droppable-folder";
+import { PARENT_DROP_ID } from "@/components/dashboard/dnd/file-explorer-dnd-context";
+import {
+  type BreadcrumbItemProps,
+  FileExplorer,
+  type ItemWrapperProps,
+} from "@/components/dashboard/file-explorer/file-explorer";
 import { UploadDropzone } from "@/components/dashboard/file-explorer/upload-dropzone";
+import { Button } from "@/components/ui/button";
 import {
   useDashboardMutations,
   useDashboardQueries,
@@ -21,18 +34,93 @@ import {
   useFolderActions,
   useReceiptActions,
 } from "@/hooks/use-dashboard";
-import { useViewPreference } from "@/hooks/use-view-preference";
+import { cn } from "@/lib/utils";
 
-interface DashboardSearch {
-  folder?: string;
-}
+const searchSchema = z.object({
+  folder: z.string().optional(),
+});
 
 export const Route = createFileRoute("/_app/dashboard")({
   component: DashboardPage,
-  validateSearch: (search: Record<string, unknown>): DashboardSearch => ({
-    folder: (search.folder as string) || undefined,
-  }),
+  validateSearch: zodValidator(searchSchema),
 });
+
+// --- DnD wrappers (dashboard-specific) ---
+
+function DroppableBreadcrumb({
+  id,
+  isCurrentPage,
+  children,
+  onClick,
+}: BreadcrumbItemProps) {
+  const { setNodeRef, isOver } = useDroppable({ id: `breadcrumb:${id}` });
+
+  return (
+    <button
+      ref={setNodeRef}
+      type="button"
+      disabled={isCurrentPage}
+      onClick={onClick}
+      className={cn(
+        "rounded-md px-1.5 py-0.5 text-sm font-medium transition-colors",
+        isCurrentPage
+          ? "cursor-default text-foreground"
+          : "cursor-pointer text-muted-foreground hover:text-foreground",
+        isOver && "bg-blue-500/20 ring-2 ring-blue-500"
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+function ParentDropCardInline({ onNavigate }: { onNavigate: () => void }) {
+  const { setNodeRef, isOver } = useDroppable({ id: PARENT_DROP_ID });
+
+  return (
+    <div
+      ref={setNodeRef}
+      role="option"
+      tabIndex={0}
+      aria-selected={false}
+      className={cn(
+        "flex cursor-pointer flex-col items-center gap-1 rounded-lg p-2 outline-none transition-colors hover:bg-accent/30 focus-visible:ring-2 focus-visible:ring-blue-500",
+        isOver && "bg-blue-500/20 ring-2 ring-blue-500 rounded-lg"
+      )}
+      onDoubleClick={onNavigate}
+    >
+      <FolderIcon className="size-16 shrink-0 text-muted-foreground/60 drop-shadow-sm" />
+      <span className="max-w-full truncate rounded-md px-1.5 py-0.5 text-xs font-medium">
+        ..
+      </span>
+    </div>
+  );
+}
+
+function ParentDropRowInline({ onNavigate }: { onNavigate: () => void }) {
+  const { setNodeRef, isOver } = useDroppable({ id: PARENT_DROP_ID });
+
+  return (
+    <div
+      ref={setNodeRef}
+      role="row"
+      tabIndex={0}
+      className={cn(
+        "group flex h-10 cursor-default items-center gap-3 border-b px-4 text-sm text-muted-foreground outline-none transition-colors hover:bg-accent/30 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500",
+        isOver && "bg-blue-500/20 ring-2 ring-blue-500"
+      )}
+      onDoubleClick={onNavigate}
+    >
+      <FolderIcon className="size-4 shrink-0 text-muted-foreground/60" />
+      <span className="flex-1 truncate font-medium">..</span>
+      <span className="w-20 shrink-0">&mdash;</span>
+      <span className="w-28 shrink-0">&mdash;</span>
+      <span className="w-24 shrink-0 text-right">&mdash;</span>
+    </div>
+  );
+}
+
+// --- Main ---
 
 function DashboardPage() {
   const state = useDashboardState();
@@ -44,25 +132,10 @@ function DashboardPage() {
     mutations,
     state.currentFolderId
   );
-  const { view, setView } = useViewPreference();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const itemRefsRef = useRef<Map<string, HTMLElement>>(new Map());
-
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-
-  const selectableItems = useMemo(
-    () =>
-      queries.items.map((entry) => ({
-        id: entry.item.id,
-        type: entry.type,
-      })),
-    [queries.items]
-  );
-
-  const selection = useSelection({ items: selectableItems });
 
   const parentFolderId = useMemo(
     () => (queries.path.length >= 2 ? queries.path.at(-2)?.id : undefined),
@@ -72,23 +145,10 @@ function DashboardPage() {
   const handleNavigate = useCallback(
     (folderId?: string) => {
       state.setCurrentFolderId(folderId);
-      selection.clearSelection();
       setEditingId(null);
     },
-    [state, selection]
+    [state]
   );
-
-  const handleBackgroundClick = useCallback(() => {
-    selection.clearSelection();
-  }, [selection]);
-
-  const setItemRef = useCallback((id: string, el: HTMLElement | null) => {
-    if (el) {
-      itemRefsRef.current.set(id, el);
-    } else {
-      itemRefsRef.current.delete(id);
-    }
-  }, []);
 
   const handleStartEditing = useCallback((id: string) => {
     setEditingId(id);
@@ -106,186 +166,16 @@ function DashboardPage() {
     setEditingId(null);
   }, []);
 
-  // Soft delete — instant, no confirmation needed (items go to Trash)
-  const handleDeleteFolder = useCallback(
-    (folderId: string) => {
-      folderActions.handleDeleteFolder(folderId);
-      selection.clearSelection();
+  const handleViewReceipt = useCallback(
+    (receipt: ReceiptWithItems) => {
+      state.setViewingReceipt(receipt);
     },
-    [folderActions, selection]
+    [state]
   );
 
-  const handleDeleteReceipt = useCallback(
-    (receiptId: string) => {
-      receiptActions.handleDeleteReceipt(receiptId);
-      selection.clearSelection();
-    },
-    [receiptActions, selection]
-  );
-
-  // --- Keyboard shortcuts ---
-
-  const focusItem = useCallback(
-    (id: string) => {
-      selection.selectSingle(id);
-      // Focus the DOM element so the focus ring appears
-      const el = itemRefsRef.current.get(id);
-      // The focusable element is nested inside the ref wrapper
-      const focusable = el?.querySelector<HTMLElement>("[tabindex='0']");
-      (focusable ?? el)?.focus();
-    },
-    [selection]
-  );
-
-  const navigateItems = useCallback(
-    (direction: 1 | -1) => {
-      const itemIds = queries.items.map((entry) => entry.item.id);
-      if (itemIds.length === 0) {
-        return;
-      }
-
-      if (selection.selectedIds.size === 0) {
-        // Nothing selected: Down/Right → first, Up/Left → last
-        focusItem(direction === 1 ? itemIds[0] : itemIds.at(-1));
-        return;
-      }
-
-      // Find the last selected item's position and move from there
-      const [currentId] = [...selection.selectedIds];
-      const currentIndex = itemIds.indexOf(currentId);
-      if (currentIndex === -1) {
-        focusItem(direction === 1 ? itemIds[0] : itemIds.at(-1));
-        return;
-      }
-
-      const nextIndex = currentIndex + direction;
-      if (nextIndex < 0 || nextIndex >= itemIds.length) {
-        return;
-      }
-
-      focusItem(itemIds[nextIndex]);
-    },
-    [queries.items, selection.selectedIds, focusItem]
-  );
-
-  // Arrow Down/Right: focus next item
-  useHotkey(
-    "ArrowDown",
-    (e) => {
-      e.preventDefault();
-      navigateItems(1);
-    },
-    { enabled: editingId === null }
-  );
-
-  useHotkey(
-    "ArrowRight",
-    (e) => {
-      e.preventDefault();
-      navigateItems(1);
-    },
-    { enabled: editingId === null }
-  );
-
-  // Arrow Up/Left: focus previous item
-  useHotkey(
-    "ArrowUp",
-    (e) => {
-      e.preventDefault();
-      navigateItems(-1);
-    },
-    { enabled: editingId === null }
-  );
-
-  useHotkey(
-    "ArrowLeft",
-    (e) => {
-      e.preventDefault();
-      navigateItems(-1);
-    },
-    { enabled: editingId === null }
-  );
-
-  // Enter: rename selected item (macOS Finder behavior)
-  useHotkey(
-    "Enter",
-    (e) => {
-      if (selection.selectedIds.size !== 1) {
-        return;
-      }
-      e.preventDefault();
-      const [id] = [...selection.selectedIds];
-      setEditingId(id);
-    },
-    { enabled: editingId === null }
-  );
-
-  // Cmd+Down: open selected folder or view selected receipt
-  useHotkey(
-    "Mod+ArrowDown",
-    (e) => {
-      if (selection.selectedIds.size !== 1) {
-        return;
-      }
-      e.preventDefault();
-      const [id] = [...selection.selectedIds];
-      const item = queries.items.find((entry) => entry.item.id === id);
-      if (item?.type === "folder") {
-        handleNavigate(id);
-      } else if (item?.type === "receipt") {
-        state.setViewingReceipt(item.item as Receipt);
-      }
-    },
-    { enabled: editingId === null }
-  );
-
-  // Cmd+Up: go to parent folder
-  useHotkey(
-    "Mod+ArrowUp",
-    (e) => {
-      if (!state.currentFolderId) {
-        return;
-      }
-      e.preventDefault();
-      handleNavigate(parentFolderId);
-    },
-    { enabled: editingId === null }
-  );
-
-  useHotkey("Escape", () => {
-    if (editingId) {
-      setEditingId(null);
-    } else {
-      selection.clearSelection();
-    }
-  });
-
-  useHotkey(
-    "Mod+A",
-    (e) => {
-      const target = e.target as HTMLElement;
-      if (
-        target.tagName !== "INPUT" &&
-        target.tagName !== "TEXTAREA" &&
-        !target.isContentEditable
-      ) {
-        e.preventDefault();
-        selection.handleSelectAll();
-      }
-    },
-    { enabled: editingId === null }
-  );
-
-  // Cmd+Backspace: soft-delete selected items
-  useHotkey(
-    "Mod+Backspace",
-    (e) => {
-      if (selection.selectedIds.size === 0) {
-        return;
-      }
-      e.preventDefault();
-
-      for (const id of selection.selectedIds) {
+  const handleDeleteItems = useCallback(
+    (ids: Set<string>) => {
+      for (const id of ids) {
         const item = queries.items.find((entry) => entry.item.id === id);
         if (item?.type === "folder") {
           folderActions.handleDeleteFolder(id);
@@ -293,36 +183,96 @@ function DashboardPage() {
           receiptActions.handleDeleteReceipt(id);
         }
       }
-      selection.clearSelection();
     },
-    { enabled: editingId === null }
+    [queries.items, folderActions, receiptActions]
   );
 
-  const viewProps = {
-    allFolders: queries.allFolders,
-    currentFolderId: state.currentFolderId,
-    editingId,
-    isSelected: selection.isSelected,
-    items: queries.items,
-    onCancelEdit: handleCancelEdit,
-    onChangeFolderColor: folderActions.handleChangeFolderColor,
-    onDeleteFolder: handleDeleteFolder,
-    onDeleteReceipt: handleDeleteReceipt,
-    onFocusItem: selection.selectSingle,
-    onMoveFolder: folderActions.handleMoveFolder,
-    onMoveReceipt: receiptActions.handleMoveReceipt,
-    onNavigate: handleNavigate,
-    onSaveEdit: handleSaveEdit,
-    onSelect: selection.handleClick,
-    onStartEditing: handleStartEditing,
-    onViewReceipt: state.setViewingReceipt,
-    parentFolderId,
-    scanningCount,
-    setItemRef,
-  };
+  const handleEscape = useCallback(() => {
+    if (state.viewingReceipt) {
+      state.setViewingReceipt(null);
+      return true;
+    }
+    return false;
+  }, [state]);
+
+  const renderItemWrapper = useCallback(
+    ({ entry, selected, isEditing, children }: ItemWrapperProps) => {
+      if (entry.type === "folder") {
+        const folder = entry.item as Folder;
+        return (
+          <ItemContextMenu
+            type="folder"
+            folders={queries.allFolders.filter((f) => f.id !== folder.id)}
+            currentFolderId={state.currentFolderId}
+            onRename={() => handleStartEditing(folder.id)}
+            onChangeColor={(color) =>
+              folderActions.handleChangeFolderColor(folder.id, color)
+            }
+            onMove={(targetId) =>
+              folderActions.handleMoveFolder(folder.id, targetId)
+            }
+            onDelete={() => folderActions.handleDeleteFolder(folder.id)}
+          >
+            <DraggableItem
+              id={folder.id}
+              data={{ item: folder, type: "folder" }}
+              isSelected={selected}
+              disabled={isEditing}
+            >
+              <DroppableFolder id={folder.id}>{() => children}</DroppableFolder>
+            </DraggableItem>
+          </ItemContextMenu>
+        );
+      }
+
+      const receipt = entry.item as ReceiptWithItems;
+      return (
+        <ItemContextMenu
+          type="receipt"
+          folders={queries.allFolders}
+          currentFolderId={state.currentFolderId}
+          onViewDetails={() => handleViewReceipt(receipt)}
+          onMove={(targetId) =>
+            receiptActions.handleMoveReceipt(receipt.id, targetId)
+          }
+          onDelete={() => receiptActions.handleDeleteReceipt(receipt.id)}
+        >
+          <DraggableItem
+            id={receipt.id}
+            data={{ item: receipt, type: "receipt" }}
+            isSelected={selected}
+          >
+            {children}
+          </DraggableItem>
+        </ItemContextMenu>
+      );
+    },
+    [
+      queries.allFolders,
+      state,
+      folderActions,
+      receiptActions,
+      handleStartEditing,
+      handleViewReceipt,
+    ]
+  );
+
+  const contentWrapper = useCallback(
+    (children: React.ReactNode) => (
+      <UploadDropzone onFiles={uploadFiles} className="h-full">
+        <BackgroundContextMenu
+          onNewFolder={() => setCreateFolderOpen(true)}
+          onUploadReceipt={() => fileInputRef.current?.click()}
+        >
+          {children}
+        </BackgroundContextMenu>
+      </UploadDropzone>
+    ),
+    [uploadFiles]
+  );
 
   return (
-    <div className="flex h-full flex-col">
+    <>
       <input
         ref={fileInputRef}
         type="file"
@@ -332,75 +282,66 @@ function DashboardPage() {
         className="hidden"
       />
 
-      <FileExplorerDndContext
+      <FileExplorer
         items={queries.items}
-        itemRefs={itemRefsRef.current}
+        path={queries.path}
+        currentFolderId={state.currentFolderId}
         parentFolderId={parentFolderId}
-        selectedIds={selection.selectedIds}
-        view={view}
-        onMoveFolder={folderActions.handleMoveFolder}
-        onMoveReceipt={receiptActions.handleMoveReceipt}
-      >
-        {(dropIntoTarget) => (
-          <>
-            <FileExplorerToolbar
-              path={queries.path}
-              view={view}
-              onViewChange={setView}
-              onNewFolder={() => setCreateFolderOpen(true)}
-              onUpload={() => fileInputRef.current?.click()}
-              onNavigate={handleNavigate}
-            />
-
-            <div className="flex-1 overflow-hidden">
-              <UploadDropzone onFiles={uploadFiles} className="h-full">
-                <BackgroundContextMenu
-                  onNewFolder={() => setCreateFolderOpen(true)}
-                  onUploadReceipt={() => fileInputRef.current?.click()}
-                >
-                  <div
-                    role="presentation"
-                    ref={containerRef}
-                    className="relative flex h-full flex-col overflow-hidden"
-                    onClick={handleBackgroundClick}
-                    onKeyDown={(e) => {
-                      if (e.key === "Escape") {
-                        handleBackgroundClick(e as unknown as React.MouseEvent);
-                      }
-                    }}
-                  >
-                    <SelectionBox
-                      containerRef={containerRef}
-                      itemRefs={itemRefsRef.current}
-                      onSelectionChange={selection.handleRubberBandSelect}
-                      disabled={editingId !== null}
-                    />
-
-                    {view === "list" ? (
-                      <FileExplorerTable
-                        {...viewProps}
-                        dropIntoTarget={dropIntoTarget}
-                      />
-                    ) : (
-                      <FileExplorerCardGrid
-                        {...viewProps}
-                        dropIntoTarget={dropIntoTarget}
-                      />
-                    )}
-                  </div>
-                </BackgroundContextMenu>
-              </UploadDropzone>
-            </div>
-          </>
+        onNavigate={handleNavigate}
+        onViewReceipt={handleViewReceipt}
+        renderItemWrapper={renderItemWrapper}
+        renderParentCard={(onNav) => (
+          <ParentDropCardInline onNavigate={onNav} />
         )}
-      </FileExplorerDndContext>
-
-      <ReceiptDetailModal
-        receipt={state.viewingReceipt}
-        onClose={() => state.setViewingReceipt(null)}
-        onDelete={receiptActions.handleDeleteReceipt}
-        onMove={receiptActions.handleMoveReceipt}
-        folders={queries.allFolders}
+        renderParentRow={(onNav) => <ParentDropRowInline onNavigate={onNav} />}
+        contentWrapper={contentWrapper}
+        rootIcon={<DocumentTextIcon className="size-4" />}
+        rootLabel="Files"
+        toolbarActions={
+          <>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setCreateFolderOpen(true)}
+              className="text-muted-foreground"
+            >
+              <FolderPlusIcon className="size-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              className="text-muted-foreground"
+            >
+              <ArrowUpTrayIcon className="size-4" />
+            </Button>
+          </>
+        }
+        BreadcrumbComponent={DroppableBreadcrumb}
+        dndConfig={{
+          handleMoveFolder: folderActions.handleMoveFolder,
+          handleMoveReceipt: receiptActions.handleMoveReceipt,
+        }}
+        sideContent={
+          <AnimatePresence>
+            {state.viewingReceipt && (
+              <ReceiptDetailPanel
+                key="receipt-detail"
+                receipt={state.viewingReceipt}
+                onClose={() => state.setViewingReceipt(null)}
+                onDelete={receiptActions.handleDeleteReceipt}
+              />
+            )}
+          </AnimatePresence>
+        }
+        editingId={editingId}
+        onStartEditing={handleStartEditing}
+        onSaveEdit={handleSaveEdit}
+        onCancelEdit={handleCancelEdit}
+        onDeleteItems={handleDeleteItems}
+        onEscape={handleEscape}
+        enableRubberBand
+        scanningCount={scanningCount}
       />
 
       <CreateFolderDialog
@@ -408,6 +349,6 @@ function DashboardPage() {
         onOpenChange={setCreateFolderOpen}
         onCreate={folderActions.handleCreateFolder}
       />
-    </div>
+    </>
   );
 }

@@ -1,11 +1,11 @@
-import type { Folder, Receipt } from "@curb/db/types";
+import type { Folder, ReceiptWithItems } from "@curb/api";
 import { useDndContext, useDraggable } from "@dnd-kit/core";
 import { motion } from "motion/react";
 import type { ReactNode } from "react";
 
 export interface DraggableData {
   type: "folder" | "receipt";
-  item: Folder | Receipt;
+  item: Folder | ReceiptWithItems;
 }
 
 interface DraggableItemProps {

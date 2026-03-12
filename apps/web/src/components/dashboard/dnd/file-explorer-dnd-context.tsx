@@ -1,4 +1,4 @@
-import type { Folder, Receipt } from "@curb/db/types";
+import type { Folder, ReceiptWithItems } from "@curb/api";
 import {
   DndContext,
   DragOverlay,
@@ -44,7 +44,7 @@ function getItemLabel(data: DraggableData): string {
   if (data.type === "folder") {
     return (data.item as Folder).name;
   }
-  return (data.item as Receipt).merchantName;
+  return (data.item as ReceiptWithItems).merchantName;
 }
 
 interface FileExplorerDndContextProps {

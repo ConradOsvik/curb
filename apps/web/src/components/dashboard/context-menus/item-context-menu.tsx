@@ -1,9 +1,9 @@
-import type { Folder } from "@curb/db/types";
+import type { Folder } from "@curb/api";
 import {
+  DocumentTextIcon,
   EyeIcon,
   FolderArrowDownIcon,
   FolderIcon,
-  HomeIcon,
   PencilIcon,
   SwatchIcon,
   TrashIcon,
@@ -112,8 +112,8 @@ export function ItemContextMenu(props: ItemContextMenuProps) {
           <ContextMenuSubContent>
             {currentFolderId && (
               <ContextMenuItem onClick={() => onMove()} className="gap-2">
-                <HomeIcon className="size-4" />
-                Home (Root)
+                <DocumentTextIcon className="size-4" />
+                Files
               </ContextMenuItem>
             )}
             {availableFolders.length > 0 && currentFolderId && (

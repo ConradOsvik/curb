@@ -1,5 +1,5 @@
-import type { Folder, Receipt } from "@curb/db/types";
-import { FolderIcon } from "@heroicons/react/24/solid";
+import type { Folder, ReceiptWithItems } from "@curb/api";
+import { DocumentTextIcon, FolderIcon } from "@heroicons/react/24/solid";
 
 import { cn } from "@/lib/utils";
 
@@ -46,7 +46,7 @@ interface FolderRowProps {
 
 interface ReceiptRowProps {
   type: "receipt";
-  item: Receipt;
+  item: ReceiptWithItems;
   isSelected: boolean;
   onClick: (e: React.MouseEvent) => void;
   onFocus: () => void;
@@ -69,7 +69,7 @@ export function FileExplorerRow(props: FileExplorerRowProps) {
         role="row"
         tabIndex={0}
         className={cn(
-          "group flex h-10 cursor-default items-center gap-3 border-b px-4 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500",
+          "group flex h-10 cursor-pointer items-center gap-3 border-b px-4 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500",
           isSelected
             ? "bg-blue-500/10 ring-2 ring-inset ring-blue-500/60 hover:bg-blue-500/15"
             : "hover:bg-accent/50",
@@ -106,7 +106,7 @@ export function FileExplorerRow(props: FileExplorerRowProps) {
       role="row"
       tabIndex={0}
       className={cn(
-        "group flex h-10 cursor-default items-center gap-3 border-b px-4 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500",
+        "group flex h-10 cursor-pointer items-center gap-3 border-b px-4 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500",
         isSelected
           ? "bg-blue-500/10 ring-2 ring-inset ring-blue-500/60 hover:bg-blue-500/15"
           : "hover:bg-accent/50"
@@ -116,7 +116,7 @@ export function FileExplorerRow(props: FileExplorerRowProps) {
       onDoubleClick={onDoubleClick}
       onKeyDown={() => {}}
     >
-      <div className="size-4 shrink-0 rounded-sm border bg-muted" />
+      <DocumentTextIcon className="size-4 shrink-0 text-muted-foreground" />
       <span className="flex-1 truncate">{receipt.merchantName}</span>
       <span className="w-20 shrink-0 text-xs capitalize text-muted-foreground">
         {receipt.receiptType}

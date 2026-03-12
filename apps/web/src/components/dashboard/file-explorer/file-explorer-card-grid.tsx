@@ -1,16 +1,19 @@
-import type { Folder, Receipt } from "@curb/db/types";
-import { useDroppable } from "@dnd-kit/core";
+import type { Folder, ReceiptWithItems } from "@curb/api";
 import { FolderIcon, FolderOpenIcon } from "@heroicons/react/24/solid";
+import type { ReactNode } from "react";
 
 import type { ExplorerItem } from "@/hooks/use-dashboard";
 import { cn } from "@/lib/utils";
 
-import { ItemContextMenu } from "../context-menus/item-context-menu";
-import { DraggableItem } from "../dnd/draggable-item";
-import { DroppableFolder } from "../dnd/droppable-folder";
-import { PARENT_DROP_ID } from "../dnd/file-explorer-dnd-context";
 import { InlineEdit } from "./inline-edit";
 import { ScanningPlaceholderCard } from "./scanning-placeholder";
+
+export interface ItemWrapperProps {
+  entry: ExplorerItem;
+  selected: boolean;
+  isEditing: boolean;
+  children: ReactNode;
+}
 
 const folderColorMap: Record<string, string> = {
   blue: "text-blue-500",
@@ -37,85 +40,54 @@ function formatDate(dateString: string) {
   });
 }
 
-function ParentDropCardInline({ onNavigate }: { onNavigate: () => void }) {
-  const { setNodeRef, isOver } = useDroppable({ id: PARENT_DROP_ID });
-
-  return (
-    <div
-      ref={setNodeRef}
-      role="option"
-      tabIndex={0}
-      aria-selected={false}
-      className={cn(
-        "flex cursor-default flex-col items-center gap-1 rounded-lg p-2 outline-none transition-colors hover:bg-accent/30 focus-visible:ring-2 focus-visible:ring-blue-500",
-        isOver && "bg-blue-500/20 ring-2 ring-blue-500 rounded-lg"
-      )}
-      onDoubleClick={onNavigate}
-    >
-      <FolderIcon className="size-16 shrink-0 text-muted-foreground/60 drop-shadow-sm" />
-      <span className="max-w-full truncate rounded-md px-1.5 py-0.5 text-xs font-medium">
-        ..
-      </span>
-    </div>
-  );
-}
-
 interface FileExplorerCardGridProps {
   items: ExplorerItem[];
-  allFolders: Folder[];
   currentFolderId?: string;
   parentFolderId?: string;
-  scanningCount: number;
-  editingId: string | null;
-  isSelected: (id: string) => boolean;
-  onSelect: (id: string, e: React.MouseEvent) => void;
+  renderItemWrapper: (props: ItemWrapperProps) => ReactNode;
+  renderParentCard?: (onNavigate: () => void) => ReactNode;
   onNavigate: (folderId?: string) => void;
-  onViewReceipt: (receipt: Receipt) => void;
-  onStartEditing: (id: string) => void;
-  onSaveEdit: (id: string, name: string) => void;
-  onCancelEdit: () => void;
-  onChangeFolderColor: (folderId: string, color: string) => void;
-  onMoveFolder: (folderId: string, targetId?: string) => void;
-  onDeleteFolder: (folderId: string) => void;
-  onMoveReceipt: (receiptId: string, targetId?: string) => void;
-  onDeleteReceipt: (receiptId: string) => void;
-  onFocusItem: (id: string) => void;
-  setItemRef: (id: string, el: HTMLElement | null) => void;
+  onViewReceipt: (receipt: ReceiptWithItems) => void;
+  isSelected?: (id: string) => boolean;
+  onSelect?: (id: string, e: React.MouseEvent) => void;
+  onFocusItem?: (id: string) => void;
+  setItemRef?: (id: string, el: HTMLElement | null) => void;
+  editingId?: string | null;
+  onSaveEdit?: (id: string, name: string) => void;
+  onCancelEdit?: () => void;
+  scanningCount?: number;
   dropIntoTarget?: string | null;
+  emptyIcon?: ReactNode;
+  emptyMessage?: string;
 }
 
 export function FileExplorerCardGrid({
   items,
-  allFolders,
   currentFolderId,
   parentFolderId,
-  scanningCount,
-  editingId,
-  isSelected,
-  onSelect,
+  renderItemWrapper,
+  renderParentCard,
   onNavigate,
   onViewReceipt,
-  onStartEditing,
-  onSaveEdit,
-  onCancelEdit,
-  onChangeFolderColor,
-  onMoveFolder,
-  onDeleteFolder,
-  onMoveReceipt,
-  onDeleteReceipt,
+  isSelected = () => false,
+  onSelect,
   onFocusItem,
   setItemRef,
+  editingId = null,
+  onSaveEdit,
+  onCancelEdit,
+  scanningCount = 0,
   dropIntoTarget,
+  emptyIcon = <FolderOpenIcon className="size-10" />,
+  emptyMessage = "No receipts yet. Drop images or right-click to get started.",
 }: FileExplorerCardGridProps) {
   const isEmpty = items.length === 0 && !currentFolderId;
 
   if (isEmpty) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3 text-muted-foreground">
-        <FolderOpenIcon className="size-10" />
-        <p className="text-sm">
-          No receipts yet. Drop images or right-click to get started.
-        </p>
+        {emptyIcon}
+        <p className="text-sm">{emptyMessage}</p>
       </div>
     );
   }
@@ -123,9 +95,23 @@ export function FileExplorerCardGrid({
   return (
     <div className="flex-1 overflow-y-auto p-4">
       <div className="grid gap-2 grid-cols-[repeat(auto-fill,120px)]">
-        {currentFolderId && (
-          <ParentDropCardInline onNavigate={() => onNavigate(parentFolderId)} />
-        )}
+        {currentFolderId &&
+          (renderParentCard ? (
+            renderParentCard(() => onNavigate(parentFolderId))
+          ) : (
+            <div
+              role="option"
+              tabIndex={0}
+              aria-selected={false}
+              className="flex cursor-pointer flex-col items-center gap-1 rounded-lg p-2 outline-none transition-colors hover:bg-accent/30 focus-visible:ring-2 focus-visible:ring-blue-500"
+              onDoubleClick={() => onNavigate(parentFolderId)}
+            >
+              <FolderIcon className="size-16 shrink-0 text-muted-foreground/60 drop-shadow-sm" />
+              <span className="max-w-full truncate rounded-md px-1.5 py-0.5 text-xs font-medium">
+                ..
+              </span>
+            </div>
+          ))}
 
         {items.map((entry) => {
           if (entry.type === "folder") {
@@ -137,103 +123,76 @@ export function FileExplorerCardGrid({
             const isEditing = editingId === folder.id;
 
             return (
-              <div key={folder.id} ref={(el) => setItemRef(folder.id, el)}>
-                <ItemContextMenu
-                  type="folder"
-                  folders={allFolders.filter((f) => f.id !== folder.id)}
-                  currentFolderId={currentFolderId}
-                  onRename={() => onStartEditing(folder.id)}
-                  onChangeColor={(color) =>
-                    onChangeFolderColor(folder.id, color)
-                  }
-                  onMove={(targetId) => onMoveFolder(folder.id, targetId)}
-                  onDelete={() => onDeleteFolder(folder.id)}
-                >
-                  <DraggableItem
-                    id={folder.id}
-                    data={{ item: folder, type: "folder" }}
-                    isSelected={selected}
-                    disabled={isEditing}
-                  >
-                    <DroppableFolder id={folder.id}>
-                      {() => (
-                        <div
-                          role="option"
-                          tabIndex={0}
-                          aria-selected={selected}
-                          className={cn(
-                            "flex cursor-default flex-col items-center gap-1 rounded-lg p-2 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-blue-500",
-                            selected ? "bg-accent/60" : "hover:bg-accent/30",
-                            dropIntoTarget === folder.id &&
-                              "bg-blue-500/20 ring-2 ring-blue-500 rounded-lg"
-                          )}
-                          onClick={(e) => onSelect(folder.id, e)}
-                          onFocus={() => onFocusItem(folder.id)}
-                          onDoubleClick={() => onNavigate(folder.id)}
-                          onKeyDown={() => {}}
-                        >
-                          <FolderIcon
-                            className={cn(
-                              "size-16 shrink-0 drop-shadow-sm",
-                              colorClass
-                            )}
-                          />
-                          {isEditing ? (
-                            <InlineEdit
-                              defaultValue={folder.name}
-                              onSave={(name) => onSaveEdit(folder.id, name)}
-                              onCancel={onCancelEdit}
-                              className="w-full text-center text-xs"
-                            />
-                          ) : (
-                            <span
-                              className={cn(
-                                "max-w-full truncate rounded-md px-1.5 py-0.5 text-xs",
-                                selected
-                                  ? "bg-blue-600 font-medium text-white"
-                                  : "font-medium"
-                              )}
-                            >
-                              {folder.name}
-                            </span>
-                          )}
-                        </div>
+              <div key={folder.id} ref={(el) => setItemRef?.(folder.id, el)}>
+                {renderItemWrapper({
+                  children: (
+                    <div
+                      role="option"
+                      tabIndex={0}
+                      aria-selected={selected}
+                      className={cn(
+                        "flex cursor-pointer flex-col items-center gap-1 rounded-lg p-2 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-blue-500",
+                        selected ? "bg-accent/60" : "hover:bg-accent/30",
+                        dropIntoTarget === folder.id &&
+                          "bg-blue-500/20 ring-2 ring-blue-500 rounded-lg"
                       )}
-                    </DroppableFolder>
-                  </DraggableItem>
-                </ItemContextMenu>
+                      onClick={(e) => onSelect?.(folder.id, e)}
+                      onFocus={() => onFocusItem?.(folder.id)}
+                      onDoubleClick={() => onNavigate(folder.id)}
+                      onKeyDown={() => {}}
+                    >
+                      <FolderIcon
+                        className={cn(
+                          "size-16 shrink-0 drop-shadow-sm",
+                          colorClass
+                        )}
+                      />
+                      {isEditing ? (
+                        <InlineEdit
+                          defaultValue={folder.name}
+                          onSave={(name) => onSaveEdit?.(folder.id, name)}
+                          onCancel={() => onCancelEdit?.()}
+                          className="w-full text-center text-xs"
+                        />
+                      ) : (
+                        <span
+                          className={cn(
+                            "max-w-full truncate rounded-md px-1.5 py-0.5 text-xs",
+                            selected
+                              ? "bg-blue-600 font-medium text-white"
+                              : "font-medium"
+                          )}
+                        >
+                          {folder.name}
+                        </span>
+                      )}
+                    </div>
+                  ),
+                  entry,
+                  isEditing,
+                  selected,
+                })}
               </div>
             );
           }
 
-          const receipt = entry.item as Receipt;
+          const receipt = entry.item as ReceiptWithItems;
           const selected = isSelected(receipt.id);
           return (
-            <div key={receipt.id} ref={(el) => setItemRef(receipt.id, el)}>
-              <ItemContextMenu
-                type="receipt"
-                folders={allFolders}
-                currentFolderId={currentFolderId}
-                onViewDetails={() => onViewReceipt(receipt)}
-                onMove={(targetId) => onMoveReceipt(receipt.id, targetId)}
-                onDelete={() => onDeleteReceipt(receipt.id)}
-              >
-                <DraggableItem
-                  id={receipt.id}
-                  data={{ item: receipt, type: "receipt" }}
-                  isSelected={selected}
-                >
+            <div key={receipt.id} ref={(el) => setItemRef?.(receipt.id, el)}>
+              {renderItemWrapper({
+                children: (
                   <div
                     role="option"
                     tabIndex={0}
                     aria-selected={selected}
                     className={cn(
-                      "flex h-full w-full cursor-default flex-col rounded-lg p-1.5 outline-none transition-colors",
+                      "flex h-full w-full cursor-pointer flex-col rounded-lg p-1.5 outline-none transition-colors",
                       selected ? "bg-accent/60" : "hover:bg-accent/30",
                       "focus-visible:ring-2 focus-visible:ring-blue-500"
                     )}
-                    onClick={(e) => onSelect(receipt.id, e)}
-                    onFocus={() => onFocusItem(receipt.id)}
+                    onClick={(e) => onSelect?.(receipt.id, e)}
+                    onFocus={() => onFocusItem?.(receipt.id)}
                     onDoubleClick={() => onViewReceipt(receipt)}
                     onKeyDown={() => {}}
                   >
@@ -274,8 +233,11 @@ export function FileExplorerCardGrid({
                       />
                     </svg>
                   </div>
-                </DraggableItem>
-              </ItemContextMenu>
+                ),
+                entry,
+                isEditing: false,
+                selected,
+              })}
             </div>
           );
         })}

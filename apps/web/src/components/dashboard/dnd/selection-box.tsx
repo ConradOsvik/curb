@@ -88,6 +88,7 @@ export function SelectionBox({
       const startX = e.clientX - containerRect.left + container.scrollLeft;
       const startY = e.clientY - containerRect.top + container.scrollTop;
 
+      e.preventDefault();
       isAdditiveRef.current = e.ctrlKey || e.metaKey;
       didDragSelectRef.current = false;
 

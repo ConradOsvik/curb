@@ -1,4 +1,4 @@
-import type { Folder, Receipt } from "@curb/db/types";
+import type { ReceiptWithItems } from "@curb/api";
 import {
   BoltIcon,
   BuildingStorefrontIcon,
@@ -7,18 +7,13 @@ import {
   ShoppingCartIcon,
   TrashIcon,
   WrenchIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/solid";
+import { motion } from "motion/react";
+import { useCallback, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
 const receiptTypeIcons = {
@@ -43,12 +38,10 @@ const receiptTypeColors = {
     "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
 } as const;
 
-interface ReceiptDetailModalProps {
-  receipt: Receipt | null;
+interface ReceiptDetailPanelProps {
+  receipt: ReceiptWithItems;
   onClose: () => void;
   onDelete: (id: string) => void;
-  onMove: (id: string, folderId?: string) => void;
-  folders?: Folder[];
 }
 
 function formatCurrency(amount: number, currency: string) {
@@ -68,17 +61,24 @@ function formatDate(dateString: string) {
   });
 }
 
-export function ReceiptDetailModal({
+export function ReceiptDetailPanel({
   receipt,
   onClose,
   onDelete,
-}: ReceiptDetailModalProps) {
-  if (!receipt) {
-    return null;
-  }
-
+}: ReceiptDetailPanelProps) {
   const receiptType = receipt.receiptType as keyof typeof receiptTypeIcons;
   const Icon = receiptTypeIcons[receiptType];
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isAtBottom, setIsAtBottom] = useState(false);
+
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) {
+      return;
+    }
+    setIsAtBottom(el.scrollHeight - el.scrollTop - el.clientHeight < 8);
+  }, []);
 
   const handleDelete = () => {
     onDelete(receipt.id);
@@ -86,29 +86,49 @@ export function ReceiptDetailModal({
   };
 
   return (
-    <Sheet open={receipt !== null} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent side="right" className="w-full sm:max-w-md">
-        <SheetHeader>
-          <div className="flex items-start justify-between pr-8">
+    <motion.div
+      key="receipt-detail"
+      initial={{ opacity: 0, x: 24 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 24 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
+      className="h-full w-full shrink-0 sm:max-w-md"
+    >
+      <div className="flex h-full w-full flex-col border-l bg-background">
+        <div className="flex flex-col gap-1.5 p-4">
+          <div className="flex items-start justify-between">
             <div>
-              <SheetTitle className="text-lg">
+              <h2 className="text-lg font-medium text-foreground">
                 {receipt.merchantName}
-              </SheetTitle>
-              <SheetDescription>{formatDate(receipt.date)}</SheetDescription>
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {formatDate(receipt.date)}
+              </p>
             </div>
-            <div
-              className={cn(
-                "flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium",
-                receiptTypeColors[receiptType]
-              )}
-            >
-              {Icon && <Icon className="size-3.5" />}
-              <span className="capitalize">{receipt.receiptType}</span>
+            <div className="flex items-center gap-2">
+              <div
+                className={cn(
+                  "flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium",
+                  receiptTypeColors[receiptType]
+                )}
+              >
+                {Icon && <Icon className="size-3.5" />}
+                <span className="capitalize">{receipt.receiptType}</span>
+              </div>
+              <Button variant="ghost" size="icon-sm" onClick={onClose}>
+                <XMarkIcon className="size-4" />
+                <span className="sr-only">Close</span>
+              </Button>
             </div>
           </div>
-        </SheetHeader>
+        </div>
 
-        <div className="flex-1 space-y-6 overflow-y-auto p-4" tabIndex={-1}>
+        <div
+          ref={scrollRef}
+          onScroll={handleScroll}
+          className="min-h-0 flex-1 space-y-6 overflow-y-auto p-4"
+          tabIndex={-1}
+        >
           {(receipt.merchantAddress ||
             receipt.merchantPhone ||
             receipt.receiptNumber) && (
@@ -139,9 +159,9 @@ export function ReceiptDetailModal({
           <section className="space-y-3">
             <h3 className="text-xs font-medium text-muted-foreground">Items</h3>
             <div className="space-y-2">
-              {receipt.items.map((item) => (
+              {receipt.items.map((item, index) => (
                 <div
-                  key={`${item.name}-${item.totalPrice}`}
+                  key={`${item.name}-${item.totalPrice}-${index}`}
                   className="flex items-start justify-between gap-4 text-sm"
                 >
                   <div className="flex-1">
@@ -262,17 +282,25 @@ export function ReceiptDetailModal({
           )}
         </div>
 
-        <SheetFooter className="border-t">
-          <Button
-            variant="destructive"
-            onClick={handleDelete}
-            className="w-full"
-          >
-            <TrashIcon className="mr-2 size-4" />
-            Delete Receipt
-          </Button>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+        <div className="relative mt-auto shrink-0">
+          <div
+            className={cn(
+              "pointer-events-none absolute inset-x-0 bottom-full h-8 bg-linear-to-t from-background/80 to-transparent transition-opacity duration-200",
+              isAtBottom ? "opacity-0" : "opacity-100"
+            )}
+          />
+          <div className="border-t p-4">
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              className="w-full"
+            >
+              <TrashIcon className="mr-2 size-4" />
+              Delete Receipt
+            </Button>
+          </div>
+        </div>
+      </div>
+    </motion.div>
   );
 }

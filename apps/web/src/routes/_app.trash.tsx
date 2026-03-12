@@ -1,30 +1,70 @@
-import {
-  ArrowPathIcon,
-  DocumentTextIcon,
-  FolderIcon,
-  TrashIcon,
-} from "@heroicons/react/24/solid";
+import type { ReceiptWithItems } from "@curb/api";
+import { TrashIcon } from "@heroicons/react/24/solid";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
-import { useCallback } from "react";
+import {
+  createFileRoute,
+  useNavigate,
+  useSearch,
+} from "@tanstack/react-router";
+import { zodValidator } from "@tanstack/zod-adapter";
+import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
+import { z } from "zod";
 
-import { Button } from "@/components/ui/button";
+import { TrashContextMenu } from "@/components/dashboard/context-menus/trash-context-menu";
+import {
+  FileExplorer,
+  type ItemWrapperProps,
+} from "@/components/dashboard/file-explorer/file-explorer";
+import { type ExplorerItem, sortItems } from "@/hooks/use-dashboard";
 import { useTRPC } from "@/lib/trpc";
+
+const searchSchema = z.object({
+  folder: z.string().optional(),
+});
 
 export const Route = createFileRoute("/_app/trash")({
   component: TrashPage,
+  validateSearch: zodValidator(searchSchema),
 });
 
 function TrashPage() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const search = useSearch({ from: "/_app/trash" });
+
+  const currentFolderId = search.folder;
+
+  const setCurrentFolderId = useCallback(
+    (folderId?: string) => {
+      navigate({ search: { folder: folderId }, to: "/trash" });
+    },
+    [navigate]
+  );
 
   const { data: trashedFolders = [] } = useQuery(
-    trpc.folders.listTrash.queryOptions()
+    trpc.folders.listTrash.queryOptions({ parentId: currentFolderId })
   );
   const { data: trashedReceipts = [] } = useQuery(
-    trpc.receipts.listTrash.queryOptions()
+    trpc.receipts.listTrash.queryOptions({ folderId: currentFolderId })
+  );
+  const { data: path = [] } = useQuery(
+    trpc.folders.getPath.queryOptions({ folderId: currentFolderId })
+  );
+
+  const items: ExplorerItem[] = useMemo(
+    () =>
+      sortItems([
+        ...trashedFolders.map((f) => ({ item: f, type: "folder" as const })),
+        ...trashedReceipts.map((r) => ({ item: r, type: "receipt" as const })),
+      ]),
+    [trashedFolders, trashedReceipts]
+  );
+
+  const parentFolderId = useMemo(
+    () => (path.length >= 2 ? path.at(-2)?.id : undefined),
+    [path]
   );
 
   const restoreFolder = useMutation(trpc.folders.restore.mutationOptions());
@@ -41,126 +81,79 @@ function TrashPage() {
     queryClient.invalidateQueries({ queryKey: [["receipts"]] });
   }, [queryClient]);
 
-  const handleRestoreFolder = useCallback(
-    async (id: string) => {
-      await restoreFolder.mutateAsync({ id });
+  const handleRestore = useCallback(
+    async (id: string, type: "folder" | "receipt") => {
+      if (type === "folder") {
+        await restoreFolder.mutateAsync({ id });
+        toast.success("Folder restored");
+      } else {
+        await restoreReceipt.mutateAsync({ id });
+        toast.success("Receipt restored");
+      }
       invalidateAll();
-      toast.success("Folder restored");
     },
-    [restoreFolder, invalidateAll]
+    [restoreFolder, restoreReceipt, invalidateAll]
   );
 
-  const handleRestoreReceipt = useCallback(
-    async (id: string) => {
-      await restoreReceipt.mutateAsync({ id });
+  const handlePermanentDelete = useCallback(
+    async (id: string, type: "folder" | "receipt") => {
+      if (type === "folder") {
+        await permanentDeleteFolder.mutateAsync({ id });
+        toast.success("Folder permanently deleted");
+      } else {
+        await permanentDeleteReceipt.mutateAsync({ id });
+        toast.success("Receipt permanently deleted");
+      }
       invalidateAll();
-      toast.success("Receipt restored");
     },
-    [restoreReceipt, invalidateAll]
+    [permanentDeleteFolder, permanentDeleteReceipt, invalidateAll]
   );
 
-  const handlePermanentDeleteFolder = useCallback(
-    async (id: string) => {
-      await permanentDeleteFolder.mutateAsync({ id });
-      invalidateAll();
-      toast.success("Folder permanently deleted");
+  const handleDeleteItems = useCallback(
+    (ids: Set<string>) => {
+      for (const id of ids) {
+        const item = items.find((entry) => entry.item.id === id);
+        if (item) {
+          handlePermanentDelete(id, item.type);
+        }
+      }
     },
-    [permanentDeleteFolder, invalidateAll]
+    [items, handlePermanentDelete]
   );
 
-  const handlePermanentDeleteReceipt = useCallback(
-    async (id: string) => {
-      await permanentDeleteReceipt.mutateAsync({ id });
-      invalidateAll();
-      toast.success("Receipt permanently deleted");
-    },
-    [permanentDeleteReceipt, invalidateAll]
+  const renderItemWrapper = useCallback(
+    ({ entry, children }: ItemWrapperProps) => (
+      <TrashContextMenu
+        onRestore={() => handleRestore(entry.item.id, entry.type)}
+        onPermanentDelete={() =>
+          handlePermanentDelete(entry.item.id, entry.type)
+        }
+      >
+        {children}
+      </TrashContextMenu>
+    ),
+    [handleRestore, handlePermanentDelete]
   );
 
-  const isEmpty = trashedFolders.length === 0 && trashedReceipts.length === 0;
+  const handleViewReceipt = useCallback((_receipt: ReceiptWithItems) => {
+    // Could open a detail panel in the future
+  }, []);
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between border-b px-4 py-2">
-        <h2 className="text-sm font-medium text-muted-foreground">Trash</h2>
-      </div>
-
-      {isEmpty ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-3 text-muted-foreground">
-          <TrashIcon className="size-10" />
-          <p className="text-sm">Trash is empty</p>
-        </div>
-      ) : (
-        <div className="flex-1 overflow-y-auto" role="table">
-          <div className="sticky top-0 z-10 flex h-8 items-center gap-3 border-b bg-surface px-4 text-xs font-medium text-muted-foreground">
-            <div className="size-4 shrink-0" />
-            <span className="flex-1">Name</span>
-            <span className="w-20 shrink-0">Type</span>
-            <span className="w-48 shrink-0 text-right">Actions</span>
-          </div>
-
-          {trashedFolders.map((folder) => (
-            <TrashRow
-              key={folder.id}
-              icon={<FolderIcon className="size-4 text-blue-500" />}
-              name={folder.name}
-              type="Folder"
-              onRestore={() => handleRestoreFolder(folder.id)}
-              onDelete={() => handlePermanentDeleteFolder(folder.id)}
-            />
-          ))}
-
-          {trashedReceipts.map((receipt) => (
-            <TrashRow
-              key={receipt.id}
-              icon={
-                <DocumentTextIcon className="size-4 text-muted-foreground" />
-              }
-              name={receipt.merchantName}
-              type="Receipt"
-              onRestore={() => handleRestoreReceipt(receipt.id)}
-              onDelete={() => handlePermanentDeleteReceipt(receipt.id)}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function TrashRow({
-  icon,
-  name,
-  type,
-  onRestore,
-  onDelete,
-}: {
-  icon: React.ReactNode;
-  name: string;
-  type: string;
-  onRestore: () => void;
-  onDelete: () => void;
-}) {
-  return (
-    <div className="group flex h-10 items-center gap-3 border-b px-4 text-sm transition-colors hover:bg-accent/30">
-      <div className="size-4 shrink-0">{icon}</div>
-      <span className="flex-1 truncate font-medium">{name}</span>
-      <span className="w-20 shrink-0 text-muted-foreground">{type}</span>
-      <div className="flex w-48 shrink-0 items-center justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-        <Button variant="ghost" size="sm" onClick={onRestore}>
-          <ArrowPathIcon className="mr-1 size-3.5" />
-          Restore
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onDelete}
-          className="text-destructive hover:text-destructive"
-        >
-          <TrashIcon className="mr-1 size-3.5" />
-          Delete
-        </Button>
-      </div>
-    </div>
+    <FileExplorer
+      items={items}
+      path={path}
+      currentFolderId={currentFolderId}
+      parentFolderId={parentFolderId}
+      onNavigate={setCurrentFolderId}
+      onViewReceipt={handleViewReceipt}
+      renderItemWrapper={renderItemWrapper}
+      rootIcon={<TrashIcon className="size-4" />}
+      rootLabel="Trash"
+      onDeleteItems={handleDeleteItems}
+      enableRubberBand
+      emptyIcon={<TrashIcon className="size-10" />}
+      emptyMessage="Trash is empty"
+    />
   );
 }

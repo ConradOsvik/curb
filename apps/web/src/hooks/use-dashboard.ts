@@ -1,5 +1,4 @@
-import type { FolderColor } from "@curb/api";
-import type { Folder, Receipt } from "@curb/db/types";
+import type { Folder, FolderColor, ReceiptWithItems } from "@curb/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -9,7 +8,7 @@ import { useTRPC } from "@/lib/trpc";
 
 export type ExplorerItem =
   | { type: "folder"; item: Folder }
-  | { type: "receipt"; item: Receipt };
+  | { type: "receipt"; item: ReceiptWithItems };
 
 function getItemName(item: ExplorerItem): string {
   if (item.type === "folder") {
@@ -29,8 +28,8 @@ export function sortItems(items: ExplorerItem[]): ExplorerItem[] {
       return getItemName(a).localeCompare(getItemName(b));
     }
     // Receipts: newest date first
-    const dateA = (a.item as Receipt).date;
-    const dateB = (b.item as Receipt).date;
+    const dateA = (a.item as ReceiptWithItems).date;
+    const dateB = (b.item as ReceiptWithItems).date;
     return dateB.localeCompare(dateA);
   });
 }
@@ -86,7 +85,9 @@ export function useDashboardState() {
     [navigate]
   );
 
-  const [viewingReceipt, setViewingReceipt] = useState<Receipt | null>(null);
+  const [viewingReceipt, setViewingReceipt] = useState<ReceiptWithItems | null>(
+    null
+  );
 
   return {
     currentFolderId,
@@ -334,12 +335,14 @@ export function useReceiptActions(
   const handleMoveReceipt = useCallback(
     async (receiptId: string, targetFolderId?: string) => {
       // Optimistic: get the receipt before removing from cache
-      const receipts = queryClient.getQueryData<Receipt[]>(receiptKey);
+      const receipts = queryClient.getQueryData<ReceiptWithItems[]>(receiptKey);
       const receipt = receipts?.find((r) => r.id === receiptId);
 
       // Remove from current view
-      queryClient.setQueryData(receiptKey, (old: Receipt[] | undefined) =>
-        old?.filter((r) => r.id !== receiptId)
+      queryClient.setQueryData(
+        receiptKey,
+        (old: ReceiptWithItems[] | undefined) =>
+          old?.filter((r) => r.id !== receiptId)
       );
 
       // Add to target folder's cache if it exists
@@ -349,7 +352,7 @@ export function useReceiptActions(
         }).queryKey;
         queryClient.setQueryData(
           targetKey,
-          (old: Receipt[] | undefined) =>
+          (old: ReceiptWithItems[] | undefined) =>
             old && [...old, { ...receipt, folderId: targetFolderId ?? "" }]
         );
       }
@@ -370,8 +373,10 @@ export function useReceiptActions(
 
   const handleDeleteReceipt = useCallback(
     async (receiptId: string) => {
-      queryClient.setQueryData(receiptKey, (old: Receipt[] | undefined) =>
-        old?.filter((r) => r.id !== receiptId)
+      queryClient.setQueryData(
+        receiptKey,
+        (old: ReceiptWithItems[] | undefined) =>
+          old?.filter((r) => r.id !== receiptId)
       );
 
       try {
@@ -409,8 +414,8 @@ export function useFileUpload(
         `Scanning ${imageFiles.length} receipt${imageFiles.length > 1 ? "s" : ""}...`
       );
 
-      try {
-        for (const file of imageFiles) {
+      const results = await Promise.allSettled(
+        imageFiles.map(async (file) => {
           const { url, key } = await mutations.uploadUrl.mutateAsync({
             contentType: file.type,
           });
@@ -429,17 +434,30 @@ export function useFileUpload(
             folderId: currentFolderId,
             storageKey: key,
           });
+
           setScanningCount((c) => Math.max(0, c - 1));
-          invalidateAll();
-        }
+        })
+      );
+
+      invalidateAll();
+
+      const failed = results.filter((r) => r.status === "rejected").length;
+      const succeeded = results.length - failed;
+
+      if (failed === 0) {
         toast.success(
-          `Successfully scanned ${imageFiles.length} receipt${imageFiles.length > 1 ? "s" : ""}`,
+          `Successfully scanned ${succeeded} receipt${succeeded > 1 ? "s" : ""}`,
           { id: toastId }
         );
-      } catch {
-        toast.error("Failed to scan receipt", { id: toastId });
+      } else if (succeeded === 0) {
+        toast.error("Failed to scan receipts", { id: toastId });
         setScanningCount(0);
-        invalidateAll();
+      } else {
+        toast.error(
+          `Scanned ${String(succeeded)} receipt${succeeded > 1 ? "s" : ""}, ${String(failed)} failed`,
+          { id: toastId }
+        );
+        setScanningCount(0);
       }
     },
     [currentFolderId, mutations, invalidateAll]
