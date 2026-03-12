@@ -7,9 +7,6 @@ import {
 } from "drizzle-orm/sqlite-core";
 import { nanoid } from "nanoid";
 
-// oxlint-disable-next-line import/no-relative-parent-imports
-import type { ReceiptItem } from "../types";
-
 export const receipts = sqliteTable(
   "receipts",
   {
@@ -25,7 +22,6 @@ export const receipts = sqliteTable(
       .primaryKey()
       .$defaultFn(() => nanoid()),
     imageUrl: text("image_url"),
-    items: text("items", { mode: "json" }).$type<ReceiptItem[]>().notNull(),
     merchantAddress: text("merchant_address"),
     merchantName: text("merchant_name").notNull(),
     merchantPhone: text("merchant_phone"),
