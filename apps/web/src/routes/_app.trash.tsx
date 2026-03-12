@@ -38,7 +38,7 @@ function TrashPage() {
 
   const setCurrentFolderId = useCallback(
     (folderId?: string) => {
-      navigate({ search: { folder: folderId }, to: "/trash" });
+      void navigate({ search: { folder: folderId }, to: "/trash" });
     },
     [navigate]
   );
@@ -77,8 +77,8 @@ function TrashPage() {
   );
 
   const invalidateAll = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: [["folders"]] });
-    queryClient.invalidateQueries({ queryKey: [["receipts"]] });
+    void queryClient.invalidateQueries({ queryKey: [["folders"]] });
+    void queryClient.invalidateQueries({ queryKey: [["receipts"]] });
   }, [queryClient]);
 
   const handleRestore = useCallback(
@@ -114,7 +114,7 @@ function TrashPage() {
       for (const id of ids) {
         const item = items.find((entry) => entry.item.id === id);
         if (item) {
-          handlePermanentDelete(id, item.type);
+          void handlePermanentDelete(id, item.type);
         }
       }
     },
@@ -124,9 +124,9 @@ function TrashPage() {
   const renderItemWrapper = useCallback(
     ({ entry, children }: ItemWrapperProps) => (
       <TrashContextMenu
-        onRestore={() => handleRestore(entry.item.id, entry.type)}
+        onRestore={() => void handleRestore(entry.item.id, entry.type)}
         onPermanentDelete={() =>
-          handlePermanentDelete(entry.item.id, entry.type)
+          void handlePermanentDelete(entry.item.id, entry.type)
         }
       >
         {children}

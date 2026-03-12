@@ -65,7 +65,11 @@ export function SignIn() {
           />
         </TextField>
 
-        <Button onPress={handleLogin} isDisabled={isLoading} className="mt-1">
+        <Button
+          onPress={() => void handleLogin()}
+          isDisabled={isLoading}
+          className="mt-1"
+        >
           {isLoading ? (
             <Spinner size="sm" color="default" />
           ) : (

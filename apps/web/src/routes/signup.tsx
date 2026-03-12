@@ -6,7 +6,6 @@ import {
   redirect,
   useNavigate,
 } from "@tanstack/react-router";
-import { useCallback, type FormEvent } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -47,28 +46,19 @@ function SignupPage() {
           },
           onSuccess: () => {
             toast.success("Account created successfully");
-            navigate({ search: {}, to: "/dashboard" });
+            void navigate({ search: {}, to: "/dashboard" });
           },
         }
       );
     },
     validators: {
       onSubmit: z.object({
-        email: z.string().email("Invalid email address"),
+        email: z.email("Invalid email address"),
         name: z.string().min(2, "Name must be at least 2 characters"),
         password: z.string().min(8, "Password must be at least 8 characters"),
       }),
     },
   });
-
-  const handleFormSubmit = useCallback(
-    (e: FormEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      form.handleSubmit();
-    },
-    [form]
-  );
 
   return (
     <div className="relative flex min-h-svh items-center justify-center px-4">
@@ -86,7 +76,14 @@ function SignupPage() {
           </p>
         </div>
 
-        <form onSubmit={handleFormSubmit} className="space-y-4">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            void form.handleSubmit();
+          }}
+          className="space-y-4"
+        >
           <form.Field name="name">
             {(field) => (
               <div className="space-y-2">

@@ -35,14 +35,14 @@ export const storage = {
     return `${env.S3_PUBLIC_URL}/${key}`;
   },
 
-  async getUploadUrl(key: string, contentType: string): Promise<string> {
+  getUploadUrl(key: string, contentType: string): Promise<string> {
     const command = new PutObjectCommand({
       Bucket: bucket,
       ContentType: contentType,
       Key: key,
       Tagging: "status=pending",
     });
-    return await getSignedUrl(s3, command, { expiresIn: 3600 });
+    return getSignedUrl(s3, command, { expiresIn: 3600 });
   },
 };
 

@@ -27,19 +27,18 @@ export function sortItems(items: ExplorerItem[]): ExplorerItem[] {
     if (a.type === "folder") {
       return getItemName(a).localeCompare(getItemName(b));
     }
-    // Receipts: newest date first
-    const dateA = (a.item as ReceiptWithItems).date;
-    const dateB = (b.item as ReceiptWithItems).date;
-    return dateB.localeCompare(dateA);
+    // Receipts: newest date first (a.type === "receipt" after folder check above)
+    if (a.type === "receipt" && b.type === "receipt") {
+      return b.item.date.localeCompare(a.item.date);
+    }
+    return 0;
   });
 }
 
 const FOLDER_SESSION_KEY = "curb:currentFolder";
 
 export function useDashboardState() {
-  const search = useSearch({ from: "/_app/dashboard" }) as {
-    folder?: string;
-  };
+  const search = useSearch({ from: "/_app/dashboard" });
   const navigate = useNavigate();
 
   // Restore from sessionStorage on mount if URL has no folder param
@@ -53,7 +52,7 @@ export function useDashboardState() {
     if (!search.folder) {
       const saved = sessionStorage.getItem(FOLDER_SESSION_KEY);
       if (saved) {
-        navigate({
+        void navigate({
           replace: true,
           search: { folder: saved },
           to: "/dashboard",
@@ -77,7 +76,7 @@ export function useDashboardState() {
 
   const setCurrentFolderId = useCallback(
     (folderId?: string) => {
-      navigate({
+      void navigate({
         search: { folder: folderId },
         to: "/dashboard",
       });
@@ -153,8 +152,8 @@ function useInvalidateAll() {
   const queryClient = useQueryClient();
 
   return useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: [["folders"]] });
-    queryClient.invalidateQueries({ queryKey: [["receipts"]] });
+    void queryClient.invalidateQueries({ queryKey: [["folders"]] });
+    void queryClient.invalidateQueries({ queryKey: [["receipts"]] });
   }, [queryClient]);
 }
 
@@ -474,7 +473,7 @@ export function useFileUpload(
         file.type.startsWith("image/")
       );
 
-      uploadFiles(imageFiles);
+      void uploadFiles(imageFiles);
       e.target.value = "";
     },
     [uploadFiles]

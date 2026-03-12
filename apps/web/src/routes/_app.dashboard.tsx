@@ -1,4 +1,4 @@
-import type { Folder, ReceiptWithItems } from "@curb/api";
+import type { ReceiptWithItems } from "@curb/api";
 import { useDroppable } from "@dnd-kit/core";
 import {
   ArrowUpTrayIcon,
@@ -156,7 +156,7 @@ function DashboardPage() {
 
   const handleSaveEdit = useCallback(
     (id: string, name: string) => {
-      folderActions.handleRenameFolder(id, name);
+      void folderActions.handleRenameFolder(id, name);
       setEditingId(null);
     },
     [folderActions]
@@ -178,9 +178,9 @@ function DashboardPage() {
       for (const id of ids) {
         const item = queries.items.find((entry) => entry.item.id === id);
         if (item?.type === "folder") {
-          folderActions.handleDeleteFolder(id);
+          void folderActions.handleDeleteFolder(id);
         } else {
-          receiptActions.handleDeleteReceipt(id);
+          void receiptActions.handleDeleteReceipt(id);
         }
       }
     },
@@ -198,7 +198,7 @@ function DashboardPage() {
   const renderItemWrapper = useCallback(
     ({ entry, selected, isEditing, children }: ItemWrapperProps) => {
       if (entry.type === "folder") {
-        const folder = entry.item as Folder;
+        const folder = entry.item;
         return (
           <ItemContextMenu
             type="folder"
@@ -206,12 +206,12 @@ function DashboardPage() {
             currentFolderId={state.currentFolderId}
             onRename={() => handleStartEditing(folder.id)}
             onChangeColor={(color) =>
-              folderActions.handleChangeFolderColor(folder.id, color)
+              void folderActions.handleChangeFolderColor(folder.id, color)
             }
             onMove={(targetId) =>
-              folderActions.handleMoveFolder(folder.id, targetId)
+              void folderActions.handleMoveFolder(folder.id, targetId)
             }
-            onDelete={() => folderActions.handleDeleteFolder(folder.id)}
+            onDelete={() => void folderActions.handleDeleteFolder(folder.id)}
           >
             <DraggableItem
               id={folder.id}
@@ -225,7 +225,7 @@ function DashboardPage() {
         );
       }
 
-      const receipt = entry.item as ReceiptWithItems;
+      const receipt = entry.item;
       return (
         <ItemContextMenu
           type="receipt"
@@ -233,9 +233,9 @@ function DashboardPage() {
           currentFolderId={state.currentFolderId}
           onViewDetails={() => handleViewReceipt(receipt)}
           onMove={(targetId) =>
-            receiptActions.handleMoveReceipt(receipt.id, targetId)
+            void receiptActions.handleMoveReceipt(receipt.id, targetId)
           }
-          onDelete={() => receiptActions.handleDeleteReceipt(receipt.id)}
+          onDelete={() => void receiptActions.handleDeleteReceipt(receipt.id)}
         >
           <DraggableItem
             id={receipt.id}
@@ -259,7 +259,10 @@ function DashboardPage() {
 
   const contentWrapper = useCallback(
     (children: React.ReactNode) => (
-      <UploadDropzone onFiles={uploadFiles} className="h-full">
+      <UploadDropzone
+        onFiles={(files) => void uploadFiles(files)}
+        className="h-full"
+      >
         <BackgroundContextMenu
           onNewFolder={() => setCreateFolderOpen(true)}
           onUploadReceipt={() => fileInputRef.current?.click()}
@@ -319,8 +322,10 @@ function DashboardPage() {
         }
         BreadcrumbComponent={DroppableBreadcrumb}
         dndConfig={{
-          handleMoveFolder: folderActions.handleMoveFolder,
-          handleMoveReceipt: receiptActions.handleMoveReceipt,
+          handleMoveFolder: (id, targetId) =>
+            void folderActions.handleMoveFolder(id, targetId),
+          handleMoveReceipt: (id, targetId) =>
+            void receiptActions.handleMoveReceipt(id, targetId),
         }}
         sideContent={
           <AnimatePresence>
@@ -329,7 +334,7 @@ function DashboardPage() {
                 key="receipt-detail"
                 receipt={state.viewingReceipt}
                 onClose={() => state.setViewingReceipt(null)}
-                onDelete={receiptActions.handleDeleteReceipt}
+                onDelete={(id) => void receiptActions.handleDeleteReceipt(id)}
               />
             )}
           </AnimatePresence>
@@ -347,7 +352,7 @@ function DashboardPage() {
       <CreateFolderDialog
         open={createFolderOpen}
         onOpenChange={setCreateFolderOpen}
-        onCreate={folderActions.handleCreateFolder}
+        onCreate={(name) => void folderActions.handleCreateFolder(name)}
       />
     </>
   );

@@ -22,8 +22,8 @@
     "docker:up": "docker compose -f infra/docker-compose.yml up -d",
     "docker:down": "docker compose -f infra/docker-compose.yml down",
     "docker:reset": "docker compose -f infra/docker-compose.yml down -v && docker compose -f infra/docker-compose.yml up -d",
-    "lint": "oxlint .",
-    "lint:fix": "oxlint --fix .",
+    "lint": "oxlint --type-aware .",
+    "lint:fix": "oxlint --fix --type-aware .",
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check .",
     "check": "turbo lint format:check typecheck",
@@ -41,6 +41,7 @@
     "@typescript/native-preview": "catalog:",
     "oxfmt": "latest",
     "oxlint": "latest",
+    "oxlint-tsgolint": "^0.16.0",
     "turbo": "^2.6.3",
     "typescript": "catalog:",
     "web": "workspace:*"

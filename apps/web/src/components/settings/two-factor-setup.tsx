@@ -118,7 +118,7 @@ export function TwoFactorSetup({
         <Button
           variant="outline"
           onClick={() => {
-            navigator.clipboard.writeText(backupCodes.join("\n"));
+            void navigator.clipboard.writeText(backupCodes.join("\n"));
             toast.success("Backup codes copied to clipboard");
           }}
         >
@@ -157,7 +157,7 @@ export function TwoFactorSetup({
             onChange={(e) => setVerifyCode(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
-                handleVerify();
+                void handleVerify();
               }
             }}
             autoFocus
@@ -174,7 +174,10 @@ export function TwoFactorSetup({
           >
             Cancel
           </Button>
-          <Button onClick={handleVerify} disabled={!verifyCode || isSubmitting}>
+          <Button
+            onClick={() => void handleVerify()}
+            disabled={!verifyCode || isSubmitting}
+          >
             {isSubmitting ? "Verifying..." : "Verify and enable"}
           </Button>
         </div>
@@ -202,9 +205,9 @@ export function TwoFactorSetup({
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               if (twoFactorEnabled) {
-                handleDisable();
+                void handleDisable();
               } else {
-                handleEnable();
+                void handleEnable();
               }
             }
           }}
@@ -216,7 +219,9 @@ export function TwoFactorSetup({
           </Button>
           <Button
             variant={twoFactorEnabled ? "destructive" : "default"}
-            onClick={twoFactorEnabled ? handleDisable : handleEnable}
+            onClick={() =>
+              void (twoFactorEnabled ? handleDisable() : handleEnable())
+            }
             disabled={!password || isSubmitting}
           >
             {isSubmitting ? "Processing..." : getButtonLabel(twoFactorEnabled)}

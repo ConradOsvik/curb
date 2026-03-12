@@ -76,7 +76,10 @@ export function ChangePassword() {
           onChange={(e) => setConfirmPassword(e.target.value)}
         />
       </div>
-      <Button onClick={handleSubmit} disabled={!canSubmit || isSubmitting}>
+      <Button
+        onClick={() => void handleSubmit()}
+        disabled={!canSubmit || isSubmitting}
+      >
         {isSubmitting ? "Changing..." : "Change password"}
       </Button>
     </div>

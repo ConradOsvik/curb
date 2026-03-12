@@ -241,7 +241,7 @@ export function FileExplorer({
       if (item?.type === "folder") {
         handleNavigate(id);
       } else if (item?.type === "receipt") {
-        onViewReceipt(item.item as ReceiptWithItems);
+        onViewReceipt(item.item);
       }
     },
     { enabled: editingId === null }

@@ -66,7 +66,7 @@ function TwoFactorPage() {
         }
       }
       toast.success("Verified successfully");
-      navigate({ to: "/dashboard" });
+      void navigate({ to: "/dashboard" });
     } catch {
       toast.error("Verification failed");
     } finally {
@@ -102,7 +102,7 @@ function TwoFactorPage() {
 
         <div className="space-y-4">
           {method === "otp" && !otpSent ? (
-            <Button className="w-full" onClick={handleSendOtp}>
+            <Button className="w-full" onClick={() => void handleSendOtp()}>
               <Mail className="size-4" />
               Send code to email
             </Button>
@@ -119,7 +119,7 @@ function TwoFactorPage() {
                   onChange={(e) => setCode(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
-                      handleVerify();
+                      void handleVerify();
                     }
                   }}
                   autoFocus
@@ -128,7 +128,7 @@ function TwoFactorPage() {
               <Button
                 className="w-full"
                 disabled={!code.trim() || isSubmitting}
-                onClick={handleVerify}
+                onClick={() => void handleVerify()}
               >
                 {isSubmitting ? "Verifying..." : "Verify"}
               </Button>
@@ -182,7 +182,7 @@ function TwoFactorPage() {
         <button
           type="button"
           className="flex w-full items-center justify-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-          onClick={() => navigate({ to: "/login" })}
+          onClick={() => void navigate({ to: "/login" })}
         >
           <ArrowLeft className="size-4" />
           Back to sign in

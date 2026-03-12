@@ -3,6 +3,8 @@ import { getRequestHeaders } from "@tanstack/react-start/server";
 
 import type { Theme } from "@/components/theme-provider";
 
+/* oxlint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return */
+
 export const getTheme = createServerFn({ method: "GET" }).handler((): Theme => {
   const headers = getRequestHeaders();
   const cookie = headers.get("cookie") ?? "";

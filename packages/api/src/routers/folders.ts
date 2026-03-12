@@ -199,30 +199,28 @@ export const foldersRouter = router({
       return path;
     }),
 
-  listAll: protectedProcedure.query(
-    async ({ ctx }) =>
-      await ctx.db
-        .select()
-        .from(folders)
-        .where(and(eq(folders.userId, ctx.user.id), notDeleted()))
+  listAll: protectedProcedure.query(({ ctx }) =>
+    ctx.db
+      .select()
+      .from(folders)
+      .where(and(eq(folders.userId, ctx.user.id), notDeleted()))
   ),
 
   listByParent: protectedProcedure
     .input(z.object({ parentId: z.string().optional() }))
-    .query(
-      async ({ ctx, input }) =>
-        await ctx.db
-          .select()
-          .from(folders)
-          .where(
-            and(
-              eq(folders.userId, ctx.user.id),
-              input.parentId
-                ? eq(folders.parentId, input.parentId)
-                : eq(folders.parentId, ""),
-              notDeleted()
-            )
+    .query(({ ctx, input }) =>
+      ctx.db
+        .select()
+        .from(folders)
+        .where(
+          and(
+            eq(folders.userId, ctx.user.id),
+            input.parentId
+              ? eq(folders.parentId, input.parentId)
+              : eq(folders.parentId, ""),
+            notDeleted()
           )
+        )
     ),
 
   listTrash: protectedProcedure
@@ -230,7 +228,7 @@ export const foldersRouter = router({
     .query(async ({ ctx, input }) => {
       if (input.parentId) {
         // Inside a specific trashed folder — show its trashed children
-        return await ctx.db
+        return ctx.db
           .select()
           .from(folders)
           .where(

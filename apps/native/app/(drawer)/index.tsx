@@ -11,7 +11,7 @@ export default function Home() {
   const { data: session, isPending } = authClient.useSession();
 
   const handleSignOut = useCallback(() => {
-    authClient.signOut();
+    void authClient.signOut();
   }, []);
 
   return (

@@ -25,7 +25,7 @@ export function PasskeysList({
       try {
         await authClient.passkey.deletePasskey({ id });
         toast.success("Passkey deleted");
-        refetch();
+        void refetch();
       } catch {
         toast.error("Failed to delete passkey");
       }
@@ -72,7 +72,7 @@ export function PasskeysList({
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => handleDelete(pk.id)}
+                onClick={() => void handleDelete(pk.id)}
               >
                 <Trash2 className="size-4 text-destructive" />
               </Button>

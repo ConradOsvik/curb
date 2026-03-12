@@ -26,7 +26,11 @@
     "pedantic": "error",
     "style": "error"
   },
-  "ignorePatterns": ["**/convex/_generated/**", "**/routeTree.gen.ts"],
+  "ignorePatterns": [
+    "**/convex/_generated/**",
+    "**/routeTree.gen.ts",
+    "apps/native/metro.config.js"
+  ],
   "rules": {
     // ── Core ESLint ──────────────────────────────────────────────────
     "no-await-in-loop": "off",
@@ -37,6 +41,7 @@
     "no-magic-numbers": "off",
     "no-ternary": "off",
     "no-undefined": "off",
+    "no-void": "off",
     "no-empty-function": "off",
     "max-lines": "off",
     "max-lines-per-function": "off",
@@ -61,6 +66,12 @@
     "@typescript-eslint/require-await": "off",
     "@typescript-eslint/no-import-type-side-effects": "off",
     "@typescript-eslint/no-use-before-define": "off",
+    "@typescript-eslint/strict-boolean-expressions": "off",
+    "@typescript-eslint/no-confusing-void-expression": "off",
+    "@typescript-eslint/promise-function-async": "off",
+    "@typescript-eslint/prefer-nullish-coalescing": "off",
+    "@typescript-eslint/no-unsafe-type-assertion": "off",
+    "@typescript-eslint/only-throw-error": "off",
 
     // ── Import ───────────────────────────────────────────────────────
     "import/no-default-export": "off",

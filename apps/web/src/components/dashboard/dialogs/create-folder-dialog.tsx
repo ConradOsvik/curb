@@ -1,4 +1,4 @@
-import { useCallback, useState, type FormEvent } from "react";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -25,19 +25,6 @@ export function CreateFolderDialog({
 }: CreateFolderDialogProps) {
   const [name, setName] = useState("");
 
-  const handleSubmit = useCallback(
-    (e: FormEvent) => {
-      e.preventDefault();
-      if (!name.trim()) {
-        return;
-      }
-      onCreate(name.trim());
-      setName("");
-      onOpenChange(false);
-    },
-    [name, onCreate, onOpenChange]
-  );
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-sm">
@@ -47,7 +34,17 @@ export function CreateFolderDialog({
             Create a new folder to organize your receipts.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!name.trim()) {
+              return;
+            }
+            onCreate(name.trim());
+            setName("");
+            onOpenChange(false);
+          }}
+        >
           <div className="space-y-2 py-4">
             <Label htmlFor="folder-name">Name</Label>
             <Input

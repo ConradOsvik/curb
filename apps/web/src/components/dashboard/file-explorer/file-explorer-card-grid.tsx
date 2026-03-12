@@ -1,4 +1,4 @@
-import type { Folder, ReceiptWithItems } from "@curb/api";
+import type { ReceiptWithItems } from "@curb/api";
 import { FolderIcon, FolderOpenIcon } from "@heroicons/react/24/solid";
 import type { ReactNode } from "react";
 
@@ -115,7 +115,7 @@ export function FileExplorerCardGrid({
 
         {items.map((entry) => {
           if (entry.type === "folder") {
-            const folder = entry.item as Folder;
+            const folder = entry.item;
             const colorClass = folder.color
               ? folderColorMap[folder.color]
               : "text-blue-500";
@@ -176,7 +176,7 @@ export function FileExplorerCardGrid({
             );
           }
 
-          const receipt = entry.item as ReceiptWithItems;
+          const receipt = entry.item;
           const selected = isSelected(receipt.id);
           return (
             <div key={receipt.id} ref={(el) => setItemRef?.(receipt.id, el)}>

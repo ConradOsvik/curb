@@ -1,4 +1,4 @@
-import type { Folder, ReceiptWithItems } from "@curb/api";
+import type { ReceiptWithItems } from "@curb/api";
 import { FolderIcon, FolderOpenIcon } from "@heroicons/react/24/solid";
 import type { ReactNode } from "react";
 
@@ -96,7 +96,7 @@ export function FileExplorerTable({
           entry.type === "folder" ? (
             <FileExplorerRow
               type="folder"
-              item={entry.item as Folder}
+              item={entry.item}
               isSelected={selected}
               isDropTarget={dropIntoTarget === entry.item.id}
               isEditing={isEditing}
@@ -109,13 +109,11 @@ export function FileExplorerTable({
           ) : (
             <FileExplorerRow
               type="receipt"
-              item={entry.item as ReceiptWithItems}
+              item={entry.item}
               isSelected={selected}
               onClick={(e) => onSelect?.(entry.item.id, e)}
               onFocus={() => onFocusItem?.(entry.item.id)}
-              onDoubleClick={() =>
-                onViewReceipt(entry.item as ReceiptWithItems)
-              }
+              onDoubleClick={() => onViewReceipt(entry.item)}
             />
           );
 

@@ -2,6 +2,8 @@ import { auth } from "@curb/auth";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeaders } from "@tanstack/react-start/server";
 
+/* oxlint-disable @typescript-eslint/no-unsafe-assignment */
+
 export const getSession = createServerFn({ method: "GET" }).handler(() => {
   const headers = getRequestHeaders();
   return auth.api.getSession({ headers });

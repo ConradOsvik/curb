@@ -2,7 +2,7 @@ import { authClient } from "@curb/auth/client";
 import { useForm } from "@tanstack/react-form";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
-import { useCallback, useState, type FormEvent } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -38,7 +38,7 @@ function ForgotPasswordPage() {
     },
     validators: {
       onSubmit: z.object({
-        email: z.string().email("Invalid email address"),
+        email: z.email("Invalid email address"),
       }),
     },
   });
@@ -60,7 +60,7 @@ function ForgotPasswordPage() {
         return;
       }
       toast.success("Password reset successfully");
-      navigate({ to: "/login" });
+      void navigate({ to: "/login" });
     },
     validators: {
       onSubmit: z
@@ -75,24 +75,6 @@ function ForgotPasswordPage() {
         }),
     },
   });
-
-  const handleEmailSubmit = useCallback(
-    (e: FormEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      emailForm.handleSubmit();
-    },
-    [emailForm]
-  );
-
-  const handleResetSubmit = useCallback(
-    (e: FormEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      resetForm.handleSubmit();
-    },
-    [resetForm]
-  );
 
   return (
     <div className="relative flex min-h-svh items-center justify-center px-4">
@@ -113,7 +95,14 @@ function ForgotPasswordPage() {
         </div>
 
         {step === "email" ? (
-          <form onSubmit={handleEmailSubmit} className="space-y-4">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              void emailForm.handleSubmit();
+            }}
+            className="space-y-4"
+          >
             <emailForm.Field name="email">
               {(field) => (
                 <div className="space-y-2">
@@ -157,7 +146,14 @@ function ForgotPasswordPage() {
             </emailForm.Subscribe>
           </form>
         ) : (
-          <form onSubmit={handleResetSubmit} className="space-y-4">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              void resetForm.handleSubmit();
+            }}
+            className="space-y-4"
+          >
             <resetForm.Field name="otp">
               {(field) => (
                 <div className="space-y-2">

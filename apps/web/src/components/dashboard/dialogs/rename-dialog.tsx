@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -31,18 +31,6 @@ export function RenameDialog({
     setName(currentName);
   }, [currentName]);
 
-  const handleSubmit = useCallback(
-    (e: FormEvent) => {
-      e.preventDefault();
-      if (!name.trim()) {
-        return;
-      }
-      onRename(name.trim());
-      onOpenChange(false);
-    },
-    [name, onRename, onOpenChange]
-  );
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-sm">
@@ -50,7 +38,16 @@ export function RenameDialog({
           <DialogTitle>Rename</DialogTitle>
           <DialogDescription>Enter a new name.</DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!name.trim()) {
+              return;
+            }
+            onRename(name.trim());
+            onOpenChange(false);
+          }}
+        >
           <div className="space-y-2 py-4">
             <Label htmlFor="rename-input">Name</Label>
             <Input

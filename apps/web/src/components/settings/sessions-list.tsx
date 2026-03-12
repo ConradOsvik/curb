@@ -25,7 +25,7 @@ export function SessionsList({ currentToken }: { currentToken: string }) {
       try {
         await authClient.revokeSession({ token });
         toast.success("Session revoked");
-        refetch();
+        void refetch();
       } catch {
         toast.error("Failed to revoke session");
       }
@@ -37,7 +37,7 @@ export function SessionsList({ currentToken }: { currentToken: string }) {
     try {
       await authClient.revokeSessions();
       toast.success("All other sessions revoked");
-      refetch();
+      void refetch();
     } catch {
       toast.error("Failed to revoke sessions");
     }
@@ -48,7 +48,7 @@ export function SessionsList({ currentToken }: { currentToken: string }) {
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-sm font-medium">Sessions</h2>
         {sessions.length > 1 && (
-          <Button variant="outline" onClick={handleRevokeAll}>
+          <Button variant="outline" onClick={() => void handleRevokeAll()}>
             Sign out all other sessions
           </Button>
         )}
@@ -101,7 +101,10 @@ export function SessionsList({ currentToken }: { currentToken: string }) {
                 </div>
               </div>
               {!isCurrentSession && (
-                <Button variant="outline" onClick={() => handleRevoke(s.token)}>
+                <Button
+                  variant="outline"
+                  onClick={() => void handleRevoke(s.token)}
+                >
                   Revoke
                 </Button>
               )}

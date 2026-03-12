@@ -7,7 +7,7 @@ import {
   useNavigate,
 } from "@tanstack/react-router";
 import { Fingerprint } from "lucide-react";
-import { useCallback, useState, type FormEvent } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -48,27 +48,18 @@ function LoginPage() {
           },
           onSuccess: () => {
             toast.success("Sign in successful");
-            navigate({ search: {}, to: "/dashboard" });
+            void navigate({ search: {}, to: "/dashboard" });
           },
         }
       );
     },
     validators: {
       onSubmit: z.object({
-        email: z.string().email("Invalid email address"),
+        email: z.email("Invalid email address"),
         password: z.string().min(8, "Password must be at least 8 characters"),
       }),
     },
   });
-
-  const handleFormSubmit = useCallback(
-    (e: FormEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      form.handleSubmit();
-    },
-    [form]
-  );
 
   const handlePasskeySignIn = useCallback(async () => {
     setIsPasskeyLoading(true);
@@ -78,7 +69,7 @@ function LoginPage() {
         toast.error(result.error.message || "Passkey authentication failed");
       } else {
         toast.success("Sign in successful");
-        navigate({ search: {}, to: "/dashboard" });
+        void navigate({ search: {}, to: "/dashboard" });
       }
     } catch {
       toast.error("Passkey authentication failed");
@@ -101,7 +92,14 @@ function LoginPage() {
           </p>
         </div>
 
-        <form onSubmit={handleFormSubmit} className="space-y-4">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            void form.handleSubmit();
+          }}
+          className="space-y-4"
+        >
           <form.Field name="email">
             {(field) => (
               <div className="space-y-2">
@@ -181,7 +179,7 @@ function LoginPage() {
         <Button
           variant="outline"
           className="w-full"
-          onClick={handlePasskeySignIn}
+          onClick={() => void handlePasskeySignIn()}
           disabled={isPasskeyLoading}
         >
           <Fingerprint className="mr-2 size-4" />
