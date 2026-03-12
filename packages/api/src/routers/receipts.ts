@@ -1,9 +1,9 @@
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { folders, receipts } from "@curb/db/schema";
+import { folders, receiptItems, receipts } from "@curb/db/schema";
 import { env } from "@curb/env/server";
 import { storage } from "@curb/storage";
 import { generateText, Output } from "ai";
-import { and, eq, gte, isNotNull, isNull, like, lte } from "drizzle-orm";
+import { and, asc, eq, gte, isNotNull, isNull, like, lte } from "drizzle-orm";
 import { z } from "zod";
 
 /* oxlint-disable import/no-relative-parent-imports */
@@ -27,6 +27,12 @@ RULES:
 8. Match prices exactly as shown
 
 Be precise and consistent.`;
+
+const itemsWithOrder = {
+  items: {
+    orderBy: [asc(receiptItems.sortOrder)],
+  },
+};
 
 async function fetchImageAsBase64(imageUrl: string): Promise<string> {
   const response = await fetch(imageUrl);
@@ -74,14 +80,6 @@ function receiptToInsert(receipt: ExtractedReceipt) {
     date: receipt.date,
     discount: receipt.discount,
     fees: receipt.fees,
-    items: receipt.items.map((item) => ({
-      isDeposit: item.isDeposit,
-      isDiscount: item.isDiscount,
-      name: item.name,
-      quantity: item.quantity,
-      totalPrice: item.totalPrice,
-      unitPrice: item.unitPrice,
-    })),
     merchantAddress: receipt.merchantAddress,
     merchantName: receipt.merchantName,
     merchantPhone: receipt.merchantPhone,
@@ -130,42 +128,69 @@ export const receiptsRouter = router({
   get: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
-      const [receipt] = await ctx.db
-        .select()
-        .from(receipts)
-        .where(
-          and(eq(receipts.id, input.id), eq(receipts.userId, ctx.user.id))
-        );
+      const receipt = await ctx.db.query.receipts.findFirst({
+        where: and(eq(receipts.id, input.id), eq(receipts.userId, ctx.user.id)),
+        with: itemsWithOrder,
+      });
       return receipt ?? null;
     }),
 
   list: protectedProcedure
     .input(z.object({ folderId: z.string().optional() }))
-    .query(
-      async ({ ctx, input }) =>
-        await ctx.db
-          .select()
-          .from(receipts)
-          .where(
-            and(
-              eq(receipts.userId, ctx.user.id),
-              input.folderId
-                ? eq(receipts.folderId, input.folderId)
-                : eq(receipts.folderId, ""),
-              notDeleted()
-            )
-          )
+    .query(({ ctx, input }) =>
+      ctx.db.query.receipts.findMany({
+        where: and(
+          eq(receipts.userId, ctx.user.id),
+          input.folderId
+            ? eq(receipts.folderId, input.folderId)
+            : eq(receipts.folderId, ""),
+          notDeleted()
+        ),
+        with: itemsWithOrder,
+      })
     ),
 
-  listTrash: protectedProcedure.query(
-    async ({ ctx }) =>
-      await ctx.db
-        .select()
-        .from(receipts)
+  listTrash: protectedProcedure
+    .input(z.object({ folderId: z.string().optional() }))
+    .query(async ({ ctx, input }) => {
+      if (input.folderId) {
+        return ctx.db.query.receipts.findMany({
+          where: and(
+            eq(receipts.userId, ctx.user.id),
+            eq(receipts.folderId, input.folderId),
+            isNotNull(receipts.deletedAt)
+          ),
+          with: itemsWithOrder,
+        });
+      }
+
+      // Trash root: show receipts whose folder is NOT also trashed
+      const allTrashed = await ctx.db.query.receipts.findMany({
+        where: and(
+          eq(receipts.userId, ctx.user.id),
+          isNotNull(receipts.deletedAt)
+        ),
+        with: itemsWithOrder,
+      });
+
+      if (allTrashed.length === 0) {
+        return [];
+      }
+
+      // Get all trashed folder IDs to filter out receipts inside trashed folders
+      const trashedFolders = await ctx.db
+        .select({ id: folders.id })
+        .from(folders)
         .where(
-          and(eq(receipts.userId, ctx.user.id), isNotNull(receipts.deletedAt))
-        )
-  ),
+          and(eq(folders.userId, ctx.user.id), isNotNull(folders.deletedAt))
+        );
+
+      const trashedFolderIds = new Set(trashedFolders.map((f) => f.id));
+      return allTrashed.filter(
+        (r) =>
+          !r.folderId || r.folderId === "" || !trashedFolderIds.has(r.folderId)
+      );
+    }),
 
   listWithFilters: protectedProcedure
     .input(
@@ -179,7 +204,7 @@ export const receiptsRouter = router({
         receiptType: z.string().optional(),
       })
     )
-    .query(async ({ ctx, input }) => {
+    .query(({ ctx, input }) => {
       const conditions = [
         eq(receipts.userId, ctx.user.id),
         input.folderId
@@ -209,10 +234,10 @@ export const receiptsRouter = router({
         );
       }
 
-      return await ctx.db
-        .select()
-        .from(receipts)
-        .where(and(...conditions));
+      return ctx.db.query.receipts.findMany({
+        where: and(...conditions),
+        with: itemsWithOrder,
+      });
     }),
 
   move: protectedProcedure
@@ -280,6 +305,7 @@ export const receiptsRouter = router({
         await storage.deleteObject(receipt.storageKey);
       }
 
+      // Items are cascade-deleted via foreign key
       await ctx.db.delete(receipts).where(eq(receipts.id, input.id));
       return input.id;
     }),
@@ -302,10 +328,27 @@ export const receiptsRouter = router({
         throw new Error("Receipt not found in trash");
       }
 
-      // Restore to root
+      // Check if original folder still exists and is not deleted
+      let restoreFolderId = receipt.folderId;
+      if (restoreFolderId) {
+        const [folder] = await ctx.db
+          .select({ deletedAt: folders.deletedAt })
+          .from(folders)
+          .where(
+            and(
+              eq(folders.id, restoreFolderId),
+              eq(folders.userId, ctx.user.id)
+            )
+          );
+        // If folder doesn't exist or is also deleted, restore to root
+        if (!folder || folder.deletedAt !== null) {
+          restoreFolderId = "";
+        }
+      }
+
       await ctx.db
         .update(receipts)
-        .set({ deletedAt: null, folderId: "" })
+        .set({ deletedAt: null, folderId: restoreFolderId })
         .where(eq(receipts.id, input.id));
 
       return input.id;
@@ -354,6 +397,21 @@ export const receiptsRouter = router({
 
         if (inserted) {
           receiptIds.push(inserted.id);
+
+          if (receipt.items.length > 0) {
+            await ctx.db.insert(receiptItems).values(
+              receipt.items.map((item, index) => ({
+                isDeposit: item.isDeposit,
+                isDiscount: item.isDiscount,
+                name: item.name,
+                quantity: item.quantity,
+                receiptId: inserted.id,
+                sortOrder: index,
+                totalPrice: item.totalPrice,
+                unitPrice: item.unitPrice,
+              }))
+            );
+          }
         }
       }
 

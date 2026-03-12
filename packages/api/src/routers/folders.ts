@@ -1,5 +1,6 @@
+import type { Database, Folder } from "@curb/db";
 import { folders, receipts } from "@curb/db/schema";
-import type { Folder } from "@curb/db/types";
+import { storage } from "@curb/storage";
 import { and, eq, isNull, isNotNull } from "drizzle-orm";
 import { z } from "zod";
 
@@ -11,6 +12,101 @@ import { folderColorSchema } from "../validators";
 /** Common condition to exclude soft-deleted folders */
 function notDeleted() {
   return isNull(folders.deletedAt);
+}
+
+/** Recursively soft-delete a folder and all its descendants */
+async function cascadeSoftDelete(
+  db: Database,
+  userId: string,
+  folderId: string,
+  timestamp: number
+) {
+  // Soft-delete receipts in this folder
+  await db
+    .update(receipts)
+    .set({ deletedAt: timestamp })
+    .where(and(eq(receipts.userId, userId), eq(receipts.folderId, folderId)));
+
+  // Find child folders and recurse
+  const children = await db
+    .select({ id: folders.id })
+    .from(folders)
+    .where(and(eq(folders.userId, userId), eq(folders.parentId, folderId)));
+
+  for (const child of children) {
+    await db
+      .update(folders)
+      .set({ deletedAt: timestamp })
+      .where(eq(folders.id, child.id));
+    await cascadeSoftDelete(db, userId, child.id, timestamp);
+  }
+}
+
+/** Recursively restore a folder and all its descendants */
+async function cascadeRestore(db: Database, userId: string, folderId: string) {
+  // Restore receipts in this folder
+  await db
+    .update(receipts)
+    .set({ deletedAt: null })
+    .where(
+      and(
+        eq(receipts.userId, userId),
+        eq(receipts.folderId, folderId),
+        isNotNull(receipts.deletedAt)
+      )
+    );
+
+  // Find child folders and recurse
+  const children = await db
+    .select({ id: folders.id })
+    .from(folders)
+    .where(
+      and(
+        eq(folders.userId, userId),
+        eq(folders.parentId, folderId),
+        isNotNull(folders.deletedAt)
+      )
+    );
+
+  for (const child of children) {
+    await db
+      .update(folders)
+      .set({ deletedAt: null })
+      .where(eq(folders.id, child.id));
+    await cascadeRestore(db, userId, child.id);
+  }
+}
+
+/** Recursively permanently delete a folder and all its descendants */
+async function cascadePermanentDelete(
+  db: Database,
+  userId: string,
+  folderId: string,
+  deleteStorageObject: (key: string) => Promise<void>
+) {
+  // Delete receipts in this folder
+  const folderReceipts = await db
+    .select({ id: receipts.id, storageKey: receipts.storageKey })
+    .from(receipts)
+    .where(and(eq(receipts.userId, userId), eq(receipts.folderId, folderId)));
+
+  for (const receipt of folderReceipts) {
+    if (receipt.storageKey) {
+      await deleteStorageObject(receipt.storageKey);
+    }
+    await db.delete(receipts).where(eq(receipts.id, receipt.id));
+  }
+
+  // Find child folders and recurse
+  const children = await db
+    .select({ id: folders.id })
+    .from(folders)
+    .where(and(eq(folders.userId, userId), eq(folders.parentId, folderId)));
+
+  for (const child of children) {
+    await cascadePermanentDelete(db, userId, child.id, deleteStorageObject);
+    await db.delete(folders).where(eq(folders.id, child.id));
+  }
 }
 
 export const foldersRouter = router({
@@ -129,15 +225,36 @@ export const foldersRouter = router({
           )
     ),
 
-  listTrash: protectedProcedure.query(
-    async ({ ctx }) =>
-      await ctx.db
+  listTrash: protectedProcedure
+    .input(z.object({ parentId: z.string().optional() }))
+    .query(async ({ ctx, input }) => {
+      if (input.parentId) {
+        // Inside a specific trashed folder — show its trashed children
+        return await ctx.db
+          .select()
+          .from(folders)
+          .where(
+            and(
+              eq(folders.userId, ctx.user.id),
+              eq(folders.parentId, input.parentId),
+              isNotNull(folders.deletedAt)
+            )
+          );
+      }
+
+      // Trash root: show folders whose parent is NOT also trashed
+      const allTrashed = await ctx.db
         .select()
         .from(folders)
         .where(
           and(eq(folders.userId, ctx.user.id), isNotNull(folders.deletedAt))
-        )
-  ),
+        );
+
+      const trashedIds = new Set(allTrashed.map((f) => f.id));
+      return allTrashed.filter(
+        (f) => !f.parentId || f.parentId === "" || !trashedIds.has(f.parentId)
+      );
+    }),
 
   move: protectedProcedure
     .input(
@@ -220,22 +337,12 @@ export const foldersRouter = router({
         throw new Error("Folder not found in trash");
       }
 
-      // Move child folders to root
-      await ctx.db
-        .update(folders)
-        .set({ parentId: "" })
-        .where(
-          and(eq(folders.userId, ctx.user.id), eq(folders.parentId, input.id))
-        );
+      // Recursively delete all descendants (receipts + subfolders)
+      await cascadePermanentDelete(ctx.db, ctx.user.id, input.id, (key) =>
+        storage.deleteObject(key)
+      );
 
-      // Move receipts to root
-      await ctx.db
-        .update(receipts)
-        .set({ folderId: "" })
-        .where(
-          and(eq(receipts.userId, ctx.user.id), eq(receipts.folderId, input.id))
-        );
-
+      // Delete the folder itself
       await ctx.db.delete(folders).where(eq(folders.id, input.id));
       return input.id;
     }),
@@ -258,33 +365,16 @@ export const foldersRouter = router({
         throw new Error("Folder not found");
       }
 
-      // Soft delete: set deletedAt timestamp
+      const now = Date.now();
+
+      // Soft delete the folder itself
       await ctx.db
         .update(folders)
-        .set({ deletedAt: Date.now() })
+        .set({ deletedAt: now })
         .where(eq(folders.id, input.id));
 
-      // Also soft-delete contents (child folders + receipts)
-      const childFolders = await ctx.db
-        .select()
-        .from(folders)
-        .where(
-          and(eq(folders.userId, ctx.user.id), eq(folders.parentId, input.id))
-        );
-
-      for (const child of childFolders) {
-        await ctx.db
-          .update(folders)
-          .set({ deletedAt: Date.now() })
-          .where(eq(folders.id, child.id));
-      }
-
-      await ctx.db
-        .update(receipts)
-        .set({ deletedAt: Date.now() })
-        .where(
-          and(eq(receipts.userId, ctx.user.id), eq(receipts.folderId, input.id))
-        );
+      // Recursively soft-delete all descendants
+      await cascadeSoftDelete(ctx.db, ctx.user.id, input.id, now);
 
       return input.id;
     }),
@@ -307,11 +397,32 @@ export const foldersRouter = router({
         throw new Error("Folder not found in trash");
       }
 
-      // Restore to root (original parent may no longer exist)
+      // Check if original parent still exists and is not deleted
+      let restoreParentId = folder.parentId;
+      if (restoreParentId) {
+        const [parent] = await ctx.db
+          .select({ deletedAt: folders.deletedAt })
+          .from(folders)
+          .where(
+            and(
+              eq(folders.id, restoreParentId),
+              eq(folders.userId, ctx.user.id)
+            )
+          );
+        // If parent doesn't exist or is also deleted, restore to root
+        if (!parent || parent.deletedAt !== null) {
+          restoreParentId = "";
+        }
+      }
+
+      // Restore the folder (preserving original parent when possible)
       await ctx.db
         .update(folders)
-        .set({ deletedAt: null, parentId: "" })
+        .set({ deletedAt: null, parentId: restoreParentId })
         .where(eq(folders.id, input.id));
+
+      // Recursively restore all descendants
+      await cascadeRestore(ctx.db, ctx.user.id, input.id);
 
       return input.id;
     }),
