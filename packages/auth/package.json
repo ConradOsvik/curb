@@ -8,7 +8,8 @@
     "./client": "./src/client.ts"
   },
   "scripts": {
-    "auth:generate": "bunx auth@latest generate --config ./src/index.ts --output ../db/src/schema/auth.ts --yes"
+    "auth:generate": "bunx auth@latest generate --config ./src/index.ts --output ../db/src/schema/auth.ts --yes",
+    "typecheck": "tsgo --noEmit"
   },
   "dependencies": {
     "@better-auth/expo": "catalog:",
@@ -21,6 +22,7 @@
   "devDependencies": {
     "@curb/config": "workspace:*",
     "@types/node": "^24.10.0",
+    "@typescript/native-preview": "catalog:",
     "better-sqlite3": "^12.6.2",
     "typescript": "catalog:"
   }

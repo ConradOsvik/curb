@@ -8,7 +8,8 @@
     "./templates/*": "./src/templates/*.tsx"
   },
   "scripts": {
-    "dev": "email dev --dir src/templates --port 3001"
+    "dev": "email dev --dir src/templates --port 3001",
+    "typecheck": "tsgo --noEmit"
   },
   "dependencies": {
     "@curb/env": "workspace:*",
@@ -23,6 +24,7 @@
     "@types/node": "^24.10.0",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
+    "@typescript/native-preview": "catalog:",
     "react-email": "^5.2.9",
     "typescript": "catalog:"
   }

@@ -1,27 +1,27 @@
 import { existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 
+import { config } from "@dotenvx/dotenvx";
 import { createEnv } from "@t3-oss/env-core";
-import { config } from "dotenv";
 import { z } from "zod";
 
-function findRootEnv(): string | undefined {
-  // Walk up from this package's directory to find the monorepo root .env
+function loadRootEnv() {
   let dir = resolve(import.meta.dirname, "..");
   while (true) {
     const candidate = join(dir, ".env");
     if (existsSync(candidate)) {
-      return candidate;
+      config({ override: true, path: candidate });
+      return;
     }
     const parent = dirname(dir);
     if (parent === dir) {
-      return undefined;
+      return;
     }
     dir = parent;
   }
 }
 
-config({ override: true, path: findRootEnv() });
+loadRootEnv();
 
 export const env = createEnv({
   emptyStringAsUndefined: true,
@@ -34,7 +34,10 @@ export const env = createEnv({
     NODE_ENV: z
       .enum(["development", "production", "test"])
       .default("development"),
-    RESEND_API_KEY: z.string().optional(),
+    POLAR_ACCESS_TOKEN: z.string(),
+    POLAR_SUCCESS_URL: z.string(),
+    POLAR_WEBHOOK_SECRET: z.string(),
+    RESEND_API_KEY: z.string(),
     S3_ACCESS_KEY_ID: z.string().optional(),
     S3_BUCKET_NAME: z.string().optional(),
     S3_ENDPOINT: z.string().optional(),

@@ -3,6 +3,7 @@
   "include": ["src/**/*.ts"],
   "compilerOptions": {
     "jsx": "react-jsx",
+    "lib": ["ESNext", "DOM"],
     "outDir": "dist"
   }
 }

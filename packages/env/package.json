@@ -8,14 +8,18 @@
     "./server": "./src/server.ts",
     "./web": "./src/web.ts"
   },
+  "scripts": {
+    "typecheck": "tsgo --noEmit"
+  },
   "dependencies": {
+    "@dotenvx/dotenvx": "catalog:",
     "@t3-oss/env-core": "^0.13.1",
-    "dotenv": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@curb/config": "workspace:*",
     "@types/node": "^24.10.0",
+    "@typescript/native-preview": "catalog:",
     "typescript": "catalog:"
   }
 }
