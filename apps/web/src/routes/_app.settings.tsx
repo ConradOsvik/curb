@@ -17,8 +17,33 @@ import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { getSession, listPasskeys, listSessions } from "@/lib/session";
+
+export const Route = createFileRoute("/_app/settings")({
+  component: SettingsPage,
+  loader: ({ context }) => {
+    context.queryClient.prefetchQuery({
+      queryFn: async () => {
+        const [sessions, current] = await Promise.all([
+          listSessions(),
+          getSession(),
+        ]);
+        return {
+          currentToken: current?.session.token ?? null,
+          sessions,
+        };
+      },
+      queryKey: ["sessions"],
+    });
+    context.queryClient.prefetchQuery({
+      queryFn: () => listPasskeys(),
+      queryKey: ["passkeys"],
+    });
+  },
+});
 
 function SettingsPage() {
+  const { user } = Route.useRouteContext();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const [isRegistering, setIsRegistering] = useState(false);
@@ -95,7 +120,10 @@ function SettingsPage() {
           <div className="rounded-lg border p-4">
             <h2 className="mb-4 text-sm font-medium">Account</h2>
             <div className="space-y-4">
-              <EmailVerification />
+              <EmailVerification
+                email={user.email}
+                emailVerified={user.emailVerified}
+              />
               <Separator />
               <ChangeEmail />
               <Separator />
@@ -107,7 +135,9 @@ function SettingsPage() {
           <div className="rounded-lg border p-4">
             <h2 className="mb-4 text-sm font-medium">Security</h2>
             <div className="space-y-4">
-              <TwoFactorSetup />
+              <TwoFactorSetup
+                twoFactorEnabled={user.twoFactorEnabled ?? false}
+              />
               <Separator />
               <Suspense fallback={<SectionSkeleton />}>
                 <PasskeysList
@@ -148,7 +178,3 @@ function SettingsPage() {
     </div>
   );
 }
-
-export const Route = createFileRoute("/_app/settings")({
-  component: SettingsPage,
-});

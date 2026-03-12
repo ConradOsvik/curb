@@ -13,16 +13,18 @@ function getButtonLabel(twoFactorEnabled: boolean): string {
   return twoFactorEnabled ? "Disable 2FA" : "Continue";
 }
 
-export function TwoFactorSetup() {
-  const { data: sessionData, isPending } = authClient.useSession();
+export function TwoFactorSetup({
+  twoFactorEnabled: initialEnabled,
+}: {
+  twoFactorEnabled: boolean;
+}) {
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(initialEnabled);
   const [step, setStep] = useState<Step>("idle");
   const [password, setPassword] = useState("");
   const [totpURI, setTotpURI] = useState("");
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
   const [verifyCode, setVerifyCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const twoFactorEnabled = sessionData?.user?.twoFactorEnabled ?? false;
 
   const handleEnable = useCallback(async () => {
     if (!password) {
@@ -62,6 +64,7 @@ export function TwoFactorSetup() {
         return;
       }
       toast.success("Two-factor authentication enabled");
+      setTwoFactorEnabled(true);
       setStep("backup-codes");
       setVerifyCode("");
     } catch {
@@ -85,6 +88,7 @@ export function TwoFactorSetup() {
         return;
       }
       toast.success("Two-factor authentication disabled");
+      setTwoFactorEnabled(false);
       setStep("idle");
       setPassword("");
     } catch {
@@ -93,10 +97,6 @@ export function TwoFactorSetup() {
       setIsSubmitting(false);
     }
   }, [password]);
-
-  if (isPending) {
-    return null;
-  }
 
   // Show backup codes after successful setup
   if (step === "backup-codes") {

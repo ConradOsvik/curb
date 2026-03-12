@@ -1,5 +1,5 @@
 import { authClient } from "@curb/auth/client";
-import { useSearch } from "@tanstack/react-router";
+import { useRouter, useSearch } from "@tanstack/react-router";
 import { BadgeCheck, MailWarning } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -7,20 +7,24 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 
-export function EmailVerification() {
-  const { data: sessionData, refetch } = authClient.useSession();
-  const [isSending, setIsSending] = useState(false);
+export function EmailVerification({
+  email,
+  emailVerified,
+}: {
+  email: string;
+  emailVerified: boolean;
+}) {
+  const router = useRouter();
   const search = useSearch({ strict: false }) as Record<string, unknown>;
+  const [isSending, setIsSending] = useState(false);
+  const [isVerified, setIsVerified] = useState(emailVerified);
 
-  // Bypass cookie cache when redirected back from verification link
   useEffect(() => {
     if (search.verified === "true") {
-      refetch({ query: { disableCookieCache: true } });
+      setIsVerified(true);
+      router.invalidate();
     }
-  }, [search.verified, refetch]);
-
-  const isVerified = sessionData?.user?.emailVerified ?? false;
-  const email = sessionData?.user?.email ?? "";
+  }, [search.verified, router]);
 
   const handleResend = useCallback(async () => {
     setIsSending(true);

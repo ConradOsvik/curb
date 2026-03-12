@@ -17,3 +17,13 @@ export const ensureSession = createServerFn({ method: "GET" }).handler(
     return session;
   }
 );
+
+export const listSessions = createServerFn({ method: "GET" }).handler(() => {
+  const headers = getRequestHeaders();
+  return auth.api.listSessions({ headers });
+});
+
+export const listPasskeys = createServerFn({ method: "GET" }).handler(() => {
+  const headers = getRequestHeaders();
+  return auth.api.listPasskeys({ headers });
+});

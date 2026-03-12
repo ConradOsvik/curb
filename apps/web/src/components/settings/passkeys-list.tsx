@@ -6,12 +6,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-
-interface Passkey {
-  id: string;
-  name?: string | null;
-  createdAt: Date;
-}
+import { listPasskeys } from "@/lib/session";
 
 export function PasskeysList({
   onRegister,
@@ -21,10 +16,7 @@ export function PasskeysList({
   isRegistering: boolean;
 }) {
   const { data: passkeys, refetch } = useSuspenseQuery({
-    queryFn: async () => {
-      const result = await authClient.passkey.listUserPasskeys();
-      return (result.data ?? []) as Passkey[];
-    },
+    queryFn: () => listPasskeys(),
     queryKey: ["passkeys"],
   });
 

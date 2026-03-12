@@ -5,16 +5,7 @@ import { useCallback } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-
-interface Session {
-  id: string;
-  token: string;
-  browser?: string | null;
-  os?: string | null;
-  device?: string | null;
-  ipAddress?: string | null;
-  createdAt: Date;
-}
+import { getSession, listSessions } from "@/lib/session";
 
 function getDeviceIcon(device: string | null | undefined) {
   if (device === "mobile") {
@@ -26,13 +17,13 @@ function getDeviceIcon(device: string | null | undefined) {
 export function SessionsList() {
   const { data, refetch } = useSuspenseQuery({
     queryFn: async () => {
-      const [sessionsResult, currentResult] = await Promise.all([
-        authClient.listSessions(),
-        authClient.getSession(),
+      const [sessions, current] = await Promise.all([
+        listSessions(),
+        getSession(),
       ]);
       return {
-        currentToken: currentResult.data?.session?.token ?? null,
-        sessions: (sessionsResult.data ?? []) as Session[],
+        currentToken: current?.session.token ?? null,
+        sessions,
       };
     },
     queryKey: ["sessions"],
