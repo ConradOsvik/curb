@@ -1,4 +1,5 @@
 import { authClient } from "@curb/auth/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense, useCallback, useState } from "react";
 import { toast } from "sonner";
@@ -28,23 +29,39 @@ export const Route = createFileRoute("/_app/settings/security")({
 
 function SecurityPage() {
   const { user, session } = Route.useRouteContext();
+  const queryClient = useQueryClient();
   const [isRegistering, setIsRegistering] = useState(false);
 
-  const handleRegisterPasskey = useCallback(async () => {
-    setIsRegistering(true);
-    try {
-      const result = await authClient.passkey.addPasskey();
-      if (result?.error) {
-        toast.error(result.error.message || "Failed to register passkey");
-      } else {
-        toast.success("Passkey registered");
+  const handleRegisterPasskey = useCallback(
+    async (name?: string) => {
+      setIsRegistering(true);
+      try {
+        const result = await authClient.passkey.addPasskey({
+          name: name || undefined,
+        });
+        if (result?.error) {
+          if (result.error.message?.includes("not allowed")) {
+            return;
+          }
+          toast.error(result.error.message || "Failed to register passkey");
+        } else {
+          toast.success("Passkey registered");
+          void queryClient.invalidateQueries({ queryKey: ["passkeys"] });
+        }
+      } catch (error) {
+        if (
+          error instanceof DOMException &&
+          error.name === "NotAllowedError"
+        ) {
+          return;
+        }
+        toast.error("Failed to register passkey");
+      } finally {
+        setIsRegistering(false);
       }
-    } catch {
-      toast.error("Failed to register passkey");
-    } finally {
-      setIsRegistering(false);
-    }
-  }, []);
+    },
+    [queryClient]
+  );
 
   return (
     <div className="space-y-6">
@@ -67,7 +84,7 @@ function SecurityPage() {
           <Separator />
           <Suspense fallback={<SectionSkeleton />}>
             <PasskeysList
-              onRegister={() => void handleRegisterPasskey()}
+              onRegister={(name) => void handleRegisterPasskey(name)}
               isRegistering={isRegistering}
             />
           </Suspense>
