@@ -1,6 +1,7 @@
 import { authClient } from "@curb/auth/client";
 import { ShieldCheck, ShieldOff } from "lucide-react";
-import { useCallback, useState } from "react";
+import QRCodeStyling from "qr-code-styling";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,42 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 type Step = "idle" | "setup" | "verify" | "backup-codes";
+
+function TotpQRCode({ data }: { data: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const qr = new QRCodeStyling({
+      cornersDotOptions: {
+        color: "#000000",
+        type: "dot",
+      },
+      cornersSquareOptions: {
+        color: "#000000",
+        type: "extra-rounded",
+      },
+      data,
+      dotsOptions: {
+        color: "#000000",
+        type: "rounded",
+      },
+      height: 200,
+      qrOptions: {
+        errorCorrectionLevel: "H",
+      },
+      type: "svg",
+      width: 200,
+    });
+
+    const container = ref.current;
+    if (container) {
+      container.innerHTML = "";
+      qr.append(container);
+    }
+  }, [data]);
+
+  return <div ref={ref} />;
+}
 
 function getButtonLabel(twoFactorEnabled: boolean): string {
   return twoFactorEnabled ? "Disable 2FA" : "Continue";
@@ -141,12 +178,7 @@ export function TwoFactorSetup({
           </p>
         </div>
         <div className="flex justify-center rounded-md border bg-white p-4">
-          <img
-            src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(totpURI)}`}
-            alt="TOTP QR Code"
-            width={200}
-            height={200}
-          />
+          <TotpQRCode data={totpURI} />
         </div>
         <div className="space-y-2">
           <Label htmlFor="totp-verify">Verification code</Label>
