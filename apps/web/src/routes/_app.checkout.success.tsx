@@ -1,7 +1,7 @@
+import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { zodValidator } from "@tanstack/zod-adapter";
-import { CircleCheck } from "lucide-react";
 import { useEffect } from "react";
 import { z } from "zod";
 
@@ -44,7 +44,7 @@ function CheckoutSuccessPage() {
     <div className="flex h-full items-center justify-center">
       <div className="mx-auto max-w-md space-y-6 text-center">
         <div className="flex justify-center">
-          <CircleCheck className="size-16 text-green-500" />
+          <CheckCircleIcon className="size-16 text-green-500" />
         </div>
         {isLoading ? (
           <div className="space-y-2">

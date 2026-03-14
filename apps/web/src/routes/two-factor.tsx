@@ -1,6 +1,11 @@
 import { authClient } from "@curb/auth/client";
+import {
+  ArrowLeftIcon,
+  EnvelopeIcon,
+  KeyIcon,
+  ShieldCheckIcon,
+} from "@heroicons/react/24/solid";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, KeyRound, Mail, ShieldCheck } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
@@ -90,7 +95,7 @@ function TwoFactorPage() {
       <div className="relative w-full max-w-sm space-y-6 rounded-lg border bg-card p-6">
         <div className="text-center">
           <div className="mx-auto mb-4 flex size-10 items-center justify-center rounded-md bg-foreground text-background">
-            <ShieldCheck className="size-5" />
+            <ShieldCheckIcon className="size-5" />
           </div>
           <h1 className="text-xl font-semibold tracking-tight">
             Two-factor authentication
@@ -103,7 +108,7 @@ function TwoFactorPage() {
         <div className="space-y-4">
           {method === "otp" && !otpSent ? (
             <Button className="w-full" onClick={() => void handleSendOtp()}>
-              <Mail className="size-4" />
+              <EnvelopeIcon className="size-4" />
               Send code to email
             </Button>
           ) : (
@@ -146,7 +151,7 @@ function TwoFactorPage() {
                 setCode("");
               }}
             >
-              <ShieldCheck className="size-4" />
+              <ShieldCheckIcon className="size-4" />
               Use authenticator app
             </button>
           )}
@@ -160,7 +165,7 @@ function TwoFactorPage() {
                 setOtpSent(false);
               }}
             >
-              <Mail className="size-4" />
+              <EnvelopeIcon className="size-4" />
               Send code via email
             </button>
           )}
@@ -173,7 +178,7 @@ function TwoFactorPage() {
                 setCode("");
               }}
             >
-              <KeyRound className="size-4" />
+              <KeyIcon className="size-4" />
               Use a backup code
             </button>
           )}
@@ -184,7 +189,7 @@ function TwoFactorPage() {
           className="flex w-full items-center justify-center gap-2 text-sm text-muted-foreground hover:text-foreground"
           onClick={() => void navigate({ to: "/login" })}
         >
-          <ArrowLeft className="size-4" />
+          <ArrowLeftIcon className="size-4" />
           Back to sign in
         </button>
       </div>

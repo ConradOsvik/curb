@@ -1,6 +1,7 @@
 import { appRouter, type Context } from "@curb/api";
 import { auth } from "@curb/auth";
 import { db } from "@curb/db";
+import { storage } from "@curb/storage";
 import { createFileRoute } from "@tanstack/react-router";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 
@@ -15,6 +16,7 @@ async function createContext(request: Request): Promise<Context> {
           token: session.session.token,
         }
       : null,
+    storage,
     user: session?.user
       ? {
           email: session.user.email,

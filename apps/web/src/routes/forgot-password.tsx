@@ -1,7 +1,7 @@
 import { authClient } from "@curb/auth/client";
+import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import { useForm } from "@tanstack/react-form";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -250,7 +250,7 @@ function ForgotPasswordPage() {
           to="/login"
           className="flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-foreground"
         >
-          <ArrowLeft className="size-4" />
+          <ArrowLeftIcon className="size-4" />
           Back to sign in
         </Link>
       </div>

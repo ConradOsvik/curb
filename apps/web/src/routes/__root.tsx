@@ -14,7 +14,7 @@ import type { TRPCClient } from "@trpc/client";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
-import { getTheme } from "@/lib/theme";
+import { getTheme } from "@/lib/server/theme";
 import { TRPCProvider } from "@/lib/trpc";
 
 import appCss from "../index.css?url";
@@ -31,6 +31,10 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
   },
   component: RootDocument,
   head: () => ({
+    links: [
+      { href: appCss, rel: "stylesheet" },
+      { href: "/favicon.svg", rel: "icon", type: "image/svg+xml" },
+    ],
     meta: [
       {
         charSet: "utf8",
@@ -56,7 +60,6 @@ function RootDocument() {
         <ThemeProvider defaultTheme={theme}>
           <html lang="en" suppressHydrationWarning>
             <head>
-              <link rel="stylesheet" href={appCss} />
               <script
                 // oxlint-disable-next-line react/no-danger
                 dangerouslySetInnerHTML={{

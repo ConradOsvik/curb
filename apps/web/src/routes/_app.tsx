@@ -2,25 +2,29 @@ import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 
 import { Header } from "@/components/layout/header";
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { getSession } from "@/lib/session";
+import { SidebarProvider } from "@/components/sidebar/sidebar-provider";
+import { getSession } from "@/lib/server/session";
+import { getSidebarState } from "@/lib/server/sidebar";
 
 export const Route = createFileRoute("/_app")({
   beforeLoad: async ({ location }) => {
-    const session = await getSession();
+    const [session, sidebarOpen] = await Promise.all([
+      getSession(),
+      getSidebarState(),
+    ]);
     if (!session) {
       throw redirect({ search: { redirect: location.href }, to: "/login" });
     }
-    return { session: session.session, user: session.user };
+    return { session: session.session, sidebarOpen, user: session.user };
   },
   component: DashboardLayout,
 });
 
 function DashboardLayout() {
-  const { user } = Route.useRouteContext();
+  const { user, sidebarOpen } = Route.useRouteContext();
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={sidebarOpen}>
       <AppSidebar
         user={{
           avatar: user.image ?? "",
@@ -28,12 +32,12 @@ function DashboardLayout() {
           name: user.name,
         }}
       />
-      <SidebarInset>
+      <main className="flex min-h-0 w-full flex-1 flex-col overflow-hidden">
         <Header />
-        <main className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <Outlet />
-        </main>
-      </SidebarInset>
+        </div>
+      </main>
     </SidebarProvider>
   );
 }

@@ -1,6 +1,6 @@
 import { authClient } from "@curb/auth/client";
+import { ArrowRightStartOnRectangleIcon } from "@heroicons/react/24/solid";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { LogOut } from "lucide-react";
 import { useCallback } from "react";
 
 import { DangerZone } from "@/components/settings/danger-zone";
@@ -38,7 +38,7 @@ function DangerZonePage() {
             </p>
           </div>
           <Button variant="outline" onClick={() => void handleSignOut()}>
-            <LogOut className="size-4" />
+            <ArrowRightStartOnRectangleIcon className="size-4" />
             Sign out
           </Button>
         </div>

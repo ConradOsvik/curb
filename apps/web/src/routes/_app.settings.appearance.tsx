@@ -1,5 +1,9 @@
+import {
+  ComputerDesktopIcon,
+  MoonIcon,
+  SunIcon,
+} from "@heroicons/react/24/solid";
 import { createFileRoute } from "@tanstack/react-router";
-import { Monitor, Moon, Sun } from "lucide-react";
 
 import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
@@ -35,21 +39,21 @@ function AppearancePage() {
               variant={theme === "light" ? "default" : "outline"}
               onClick={() => setTheme("light")}
             >
-              <Sun className="size-4" />
+              <SunIcon className="size-4" />
               Light
             </Button>
             <Button
               variant={theme === "dark" ? "default" : "outline"}
               onClick={() => setTheme("dark")}
             >
-              <Moon className="size-4" />
+              <MoonIcon className="size-4" />
               Dark
             </Button>
             <Button
               variant={theme === "system" ? "default" : "outline"}
               onClick={() => setTheme("system")}
             >
-              <Monitor className="size-4" />
+              <ComputerDesktopIcon className="size-4" />
               System
             </Button>
           </div>

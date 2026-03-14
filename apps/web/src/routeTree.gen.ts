@@ -16,12 +16,15 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppTrashRouteImport } from './routes/_app.trash'
+import { Route as AppSheetsRouteImport } from './routes/_app.sheets'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppEmailVerifiedRouteImport } from './routes/_app.email-verified'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
+import { Route as AppSheetsIndexRouteImport } from './routes/_app.sheets.index'
 import { Route as AppSettingsIndexRouteImport } from './routes/_app.settings.index'
 import { Route as ApiTrpcSplatRouteImport } from './routes/api/trpc/$'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as AppSheetsSheetIdRouteImport } from './routes/_app.sheets.$sheetId'
 import { Route as AppSettingsSecurityRouteImport } from './routes/_app.settings.security'
 import { Route as AppSettingsDangerZoneRouteImport } from './routes/_app.settings.danger-zone'
 import { Route as AppSettingsAppearanceRouteImport } from './routes/_app.settings.appearance'
@@ -61,6 +64,11 @@ const AppTrashRoute = AppTrashRouteImport.update({
   path: '/trash',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSheetsRoute = AppSheetsRouteImport.update({
+  id: '/sheets',
+  path: '/sheets',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSettingsRoute = AppSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -76,6 +84,11 @@ const AppDashboardRoute = AppDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSheetsIndexRoute = AppSheetsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppSheetsRoute,
+} as any)
 const AppSettingsIndexRoute = AppSettingsIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -90,6 +103,11 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppSheetsSheetIdRoute = AppSheetsSheetIdRouteImport.update({
+  id: '/$sheetId',
+  path: '/$sheetId',
+  getParentRoute: () => AppSheetsRoute,
 } as any)
 const AppSettingsSecurityRoute = AppSettingsSecurityRouteImport.update({
   id: '/security',
@@ -121,14 +139,17 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AppDashboardRoute
   '/email-verified': typeof AppEmailVerifiedRoute
   '/settings': typeof AppSettingsRouteWithChildren
+  '/sheets': typeof AppSheetsRouteWithChildren
   '/trash': typeof AppTrashRoute
   '/checkout/success': typeof AppCheckoutSuccessRoute
   '/settings/appearance': typeof AppSettingsAppearanceRoute
   '/settings/danger-zone': typeof AppSettingsDangerZoneRoute
   '/settings/security': typeof AppSettingsSecurityRoute
+  '/sheets/$sheetId': typeof AppSheetsSheetIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/settings/': typeof AppSettingsIndexRoute
+  '/sheets/': typeof AppSheetsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -143,9 +164,11 @@ export interface FileRoutesByTo {
   '/settings/appearance': typeof AppSettingsAppearanceRoute
   '/settings/danger-zone': typeof AppSettingsDangerZoneRoute
   '/settings/security': typeof AppSettingsSecurityRoute
+  '/sheets/$sheetId': typeof AppSheetsSheetIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/settings': typeof AppSettingsIndexRoute
+  '/sheets': typeof AppSheetsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -158,14 +181,17 @@ export interface FileRoutesById {
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/email-verified': typeof AppEmailVerifiedRoute
   '/_app/settings': typeof AppSettingsRouteWithChildren
+  '/_app/sheets': typeof AppSheetsRouteWithChildren
   '/_app/trash': typeof AppTrashRoute
   '/_app/checkout/success': typeof AppCheckoutSuccessRoute
   '/_app/settings/appearance': typeof AppSettingsAppearanceRoute
   '/_app/settings/danger-zone': typeof AppSettingsDangerZoneRoute
   '/_app/settings/security': typeof AppSettingsSecurityRoute
+  '/_app/sheets/$sheetId': typeof AppSheetsSheetIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/_app/settings/': typeof AppSettingsIndexRoute
+  '/_app/sheets/': typeof AppSheetsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -178,14 +204,17 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/email-verified'
     | '/settings'
+    | '/sheets'
     | '/trash'
     | '/checkout/success'
     | '/settings/appearance'
     | '/settings/danger-zone'
     | '/settings/security'
+    | '/sheets/$sheetId'
     | '/api/auth/$'
     | '/api/trpc/$'
     | '/settings/'
+    | '/sheets/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -200,9 +229,11 @@ export interface FileRouteTypes {
     | '/settings/appearance'
     | '/settings/danger-zone'
     | '/settings/security'
+    | '/sheets/$sheetId'
     | '/api/auth/$'
     | '/api/trpc/$'
     | '/settings'
+    | '/sheets'
   id:
     | '__root__'
     | '/'
@@ -214,14 +245,17 @@ export interface FileRouteTypes {
     | '/_app/dashboard'
     | '/_app/email-verified'
     | '/_app/settings'
+    | '/_app/sheets'
     | '/_app/trash'
     | '/_app/checkout/success'
     | '/_app/settings/appearance'
     | '/_app/settings/danger-zone'
     | '/_app/settings/security'
+    | '/_app/sheets/$sheetId'
     | '/api/auth/$'
     | '/api/trpc/$'
     | '/_app/settings/'
+    | '/_app/sheets/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -286,6 +320,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTrashRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/sheets': {
+      id: '/_app/sheets'
+      path: '/sheets'
+      fullPath: '/sheets'
+      preLoaderRoute: typeof AppSheetsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/settings': {
       id: '/_app/settings'
       path: '/settings'
@@ -307,6 +348,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/sheets/': {
+      id: '/_app/sheets/'
+      path: '/'
+      fullPath: '/sheets/'
+      preLoaderRoute: typeof AppSheetsIndexRouteImport
+      parentRoute: typeof AppSheetsRoute
+    }
     '/_app/settings/': {
       id: '/_app/settings/'
       path: '/'
@@ -327,6 +375,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/auth/$'
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/sheets/$sheetId': {
+      id: '/_app/sheets/$sheetId'
+      path: '/$sheetId'
+      fullPath: '/sheets/$sheetId'
+      preLoaderRoute: typeof AppSheetsSheetIdRouteImport
+      parentRoute: typeof AppSheetsRoute
     }
     '/_app/settings/security': {
       id: '/_app/settings/security'
@@ -377,10 +432,25 @@ const AppSettingsRouteWithChildren = AppSettingsRoute._addFileChildren(
   AppSettingsRouteChildren,
 )
 
+interface AppSheetsRouteChildren {
+  AppSheetsSheetIdRoute: typeof AppSheetsSheetIdRoute
+  AppSheetsIndexRoute: typeof AppSheetsIndexRoute
+}
+
+const AppSheetsRouteChildren: AppSheetsRouteChildren = {
+  AppSheetsSheetIdRoute: AppSheetsSheetIdRoute,
+  AppSheetsIndexRoute: AppSheetsIndexRoute,
+}
+
+const AppSheetsRouteWithChildren = AppSheetsRoute._addFileChildren(
+  AppSheetsRouteChildren,
+)
+
 interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRoute
   AppEmailVerifiedRoute: typeof AppEmailVerifiedRoute
   AppSettingsRoute: typeof AppSettingsRouteWithChildren
+  AppSheetsRoute: typeof AppSheetsRouteWithChildren
   AppTrashRoute: typeof AppTrashRoute
   AppCheckoutSuccessRoute: typeof AppCheckoutSuccessRoute
 }
@@ -389,6 +459,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
   AppEmailVerifiedRoute: AppEmailVerifiedRoute,
   AppSettingsRoute: AppSettingsRouteWithChildren,
+  AppSheetsRoute: AppSheetsRouteWithChildren,
   AppTrashRoute: AppTrashRoute,
   AppCheckoutSuccessRoute: AppCheckoutSuccessRoute,
 }

@@ -5,7 +5,7 @@ import { FeaturesSection } from "@/components/landing/features-section";
 import { Footer } from "@/components/landing/footer";
 import { HeroSection } from "@/components/landing/hero-section";
 import { MarketingHeader } from "@/components/marketing-header";
-import { getSession } from "@/lib/session";
+import { getSession } from "@/lib/server/session";
 
 export const Route = createFileRoute("/")({
   beforeLoad: async () => {

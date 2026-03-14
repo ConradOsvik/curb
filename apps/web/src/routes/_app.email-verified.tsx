@@ -1,5 +1,5 @@
+import { CheckBadgeIcon } from "@heroicons/react/24/solid";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { BadgeCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
@@ -14,7 +14,7 @@ function EmailVerifiedPage() {
     <div className="flex h-full items-center justify-center">
       <div className="mx-auto max-w-md space-y-6 text-center">
         <div className="flex justify-center">
-          <BadgeCheck className="size-16 text-green-500" />
+          <CheckBadgeIcon className="size-16 text-green-500" />
         </div>
         <div className="space-y-2">
           <h1 className="text-2xl font-semibold tracking-tight">

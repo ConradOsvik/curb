@@ -12,7 +12,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { getSession } from "@/lib/session";
+import { getSession } from "@/lib/server/session";
 
 export const Route = createFileRoute("/signup")({
   beforeLoad: async () => {
@@ -36,6 +36,7 @@ function SignupPage() {
     onSubmit: async ({ value }) => {
       await authClient.signUp.email(
         {
+          callbackURL: "/email-verified",
           email: value.email,
           name: value.name,
           password: value.password,
@@ -147,7 +148,6 @@ function SignupPage() {
               </div>
             )}
           </form.Field>
-
           <form.Subscribe
             selector={(state) => ({
               canSubmit: state.canSubmit,

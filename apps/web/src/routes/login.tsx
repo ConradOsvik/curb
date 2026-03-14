@@ -1,4 +1,5 @@
 import { authClient } from "@curb/auth/client";
+import { FingerPrintIcon } from "@heroicons/react/24/solid";
 import { useForm } from "@tanstack/react-form";
 import {
   Link,
@@ -6,7 +7,6 @@ import {
   redirect,
   useNavigate,
 } from "@tanstack/react-router";
-import { Fingerprint } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { getSession } from "@/lib/session";
+import { getSession } from "@/lib/server/session";
 
 export const Route = createFileRoute("/login")({
   beforeLoad: async () => {
@@ -182,7 +182,7 @@ function LoginPage() {
           onClick={() => void handlePasskeySignIn()}
           disabled={isPasskeyLoading}
         >
-          <Fingerprint className="mr-2 size-4" />
+          <FingerPrintIcon className="mr-2 size-4" />
           {isPasskeyLoading ? "Authenticating..." : "Sign in with Passkey"}
         </Button>
 

@@ -11,7 +11,7 @@ import { SessionsList } from "@/components/settings/sessions-list";
 import { SessionsSkeleton } from "@/components/settings/sessions-skeleton";
 import { TwoFactorSetup } from "@/components/settings/two-factor-setup";
 import { Separator } from "@/components/ui/separator";
-import { listPasskeys, listSessions } from "@/lib/session";
+import { listPasskeys, listSessions } from "@/lib/server/session";
 
 export const Route = createFileRoute("/_app/settings/security")({
   component: SecurityPage,
@@ -49,10 +49,7 @@ function SecurityPage() {
           void queryClient.invalidateQueries({ queryKey: ["passkeys"] });
         }
       } catch (error) {
-        if (
-          error instanceof DOMException &&
-          error.name === "NotAllowedError"
-        ) {
+        if (error instanceof DOMException && error.name === "NotAllowedError") {
           return;
         }
         toast.error("Failed to register passkey");
