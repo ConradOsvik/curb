@@ -1,6 +1,6 @@
 import { authClient } from "@curb/auth/client";
+import { FingerPrintIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Fingerprint, Trash2 } from "lucide-react";
 import { useCallback, useRef } from "react";
 import { toast } from "sonner";
 
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { listPasskeys } from "@/lib/session";
+import { listPasskeys } from "@/lib/server/session";
 
 export function PasskeysList({
   onRegister,
@@ -69,7 +69,7 @@ export function PasskeysList({
             className="shrink-0"
             disabled={isRegistering}
           >
-            <Fingerprint className="size-4" />
+            <FingerPrintIcon className="size-4" />
             {isRegistering ? "Registering..." : "Register"}
           </Button>
         </ButtonGroup>
@@ -83,7 +83,7 @@ export function PasskeysList({
               className="flex items-center justify-between rounded-md border px-3 py-2"
             >
               <div className="flex items-center gap-2">
-                <Fingerprint className="size-4 text-muted-foreground" />
+                <FingerPrintIcon className="size-4 text-muted-foreground" />
                 <div>
                   <p className="text-sm font-medium">{pk.name || "Passkey"}</p>
                   <p className="text-xs text-muted-foreground">
@@ -101,7 +101,7 @@ export function PasskeysList({
                 size="icon"
                 onClick={() => void handleDelete(pk.id)}
               >
-                <Trash2 className="size-4 text-destructive" />
+                <TrashIcon className="size-4 text-destructive" />
               </Button>
             </div>
           ))}

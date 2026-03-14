@@ -1,17 +1,21 @@
 import { authClient } from "@curb/auth/client";
+import {
+  ComputerDesktopIcon,
+  DevicePhoneMobileIcon,
+  GlobeAltIcon,
+} from "@heroicons/react/24/solid";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Globe, Laptop, Smartphone } from "lucide-react";
 import { useCallback } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { listSessions } from "@/lib/session";
+import { listSessions } from "@/lib/server/session";
 
 function getDeviceIcon(device: string | null | undefined) {
   if (device === "mobile") {
-    return Smartphone;
+    return DevicePhoneMobileIcon;
   }
-  return Laptop;
+  return ComputerDesktopIcon;
 }
 
 export function SessionsList({ currentToken }: { currentToken: string }) {
@@ -81,7 +85,7 @@ export function SessionsList({ currentToken }: { currentToken: string }) {
                     )}
                   </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Globe className="size-3" />
+                    <GlobeAltIcon className="size-3" />
                     <span>{browser}</span>
                     {s.ipAddress && (
                       <>

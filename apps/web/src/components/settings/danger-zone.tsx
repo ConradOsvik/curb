@@ -1,6 +1,6 @@
 import { authClient } from "@curb/auth/client";
+import { ExclamationTriangleIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useNavigate } from "@tanstack/react-router";
-import { AlertTriangle, Trash2 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
@@ -64,7 +64,7 @@ export function DangerZone({ userName }: { userName: string }) {
           <AlertDialogTrigger
             render={
               <Button variant="destructive" className="shrink-0">
-                <Trash2 className="size-4" />
+                <TrashIcon className="size-4" />
                 Delete account
               </Button>
             }
@@ -80,7 +80,7 @@ export function DangerZone({ userName }: { userName: string }) {
             </AlertDialogHeader>
             <div className="space-y-3">
               <div className="flex items-start gap-2 rounded-md bg-destructive/5 p-3">
-                <AlertTriangle className="mt-0.5 size-4 shrink-0 text-destructive" />
+                <ExclamationTriangleIcon className="mt-0.5 size-4 shrink-0 text-destructive" />
                 <p className="text-sm text-destructive">
                   To confirm, type your display name{" "}
                   <span className="font-semibold">{userName}</span> below.

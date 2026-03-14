@@ -1,5 +1,8 @@
 import { authClient } from "@curb/auth/client";
-import { BadgeCheck, MailWarning } from "lucide-react";
+import {
+  CheckBadgeIcon,
+  ExclamationTriangleIcon,
+} from "@heroicons/react/24/solid";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
@@ -34,38 +37,32 @@ export function EmailVerification({
     }
   }, [email]);
 
-  if (emailVerified) {
-    return (
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <Label>Email verification</Label>
-          <p className="text-xs text-muted-foreground">
-            Your email is verified
-          </p>
-        </div>
-        <BadgeCheck className="size-5 text-green-600" />
-      </div>
-    );
-  }
-
   return (
     <div className="flex items-center justify-between">
       <div className="space-y-1">
         <div className="flex items-center gap-2">
           <Label>Email verification</Label>
-          <MailWarning className="size-4 text-amber-500" />
+          {emailVerified ? (
+            <CheckBadgeIcon className="size-5 text-blue-500" />
+          ) : (
+            <ExclamationTriangleIcon className="size-5 text-amber-500" />
+          )}
         </div>
         <p className="text-xs text-muted-foreground">
-          Your email is not verified
+          {emailVerified
+            ? "Your email is verified"
+            : "Your email is not verified"}
         </p>
       </div>
-      <Button
-        variant="outline"
-        onClick={() => void handleResend()}
-        disabled={isSending}
-      >
-        {isSending ? "Sending..." : "Resend verification"}
-      </Button>
+      {!emailVerified && (
+        <Button
+          variant="outline"
+          onClick={() => void handleResend()}
+          disabled={isSending}
+        >
+          {isSending ? "Sending..." : "Resend verification"}
+        </Button>
+      )}
     </div>
   );
 }

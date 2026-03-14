@@ -1,5 +1,8 @@
 import { authClient } from "@curb/auth/client";
-import { ShieldCheck, ShieldOff } from "lucide-react";
+import {
+  ShieldCheckIcon,
+  ShieldExclamationIcon,
+} from "@heroicons/react/24/solid";
 import QRCodeStyling from "qr-code-styling";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -280,12 +283,12 @@ export function TwoFactorSetup({
       >
         {twoFactorEnabled ? (
           <>
-            <ShieldOff className="size-4" />
+            <ShieldExclamationIcon className="size-4" />
             Disable
           </>
         ) : (
           <>
-            <ShieldCheck className="size-4" />
+            <ShieldCheckIcon className="size-4" />
             Enable
           </>
         )}
