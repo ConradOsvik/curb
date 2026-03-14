@@ -1,6 +1,5 @@
 import type { Database, Folder } from "@curb/db";
 import { folders, receipts } from "@curb/db/schema";
-import { storage } from "@curb/storage";
 import { and, eq, isNull, isNotNull } from "drizzle-orm";
 import { z } from "zod";
 
@@ -337,7 +336,7 @@ export const foldersRouter = router({
 
       // Recursively delete all descendants (receipts + subfolders)
       await cascadePermanentDelete(ctx.db, ctx.user.id, input.id, (key) =>
-        storage.deleteObject(key)
+        ctx.storage.deleteObject(key)
       );
 
       // Delete the folder itself

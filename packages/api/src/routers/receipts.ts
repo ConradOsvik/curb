@@ -1,7 +1,7 @@
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { folders, receiptItems, receipts } from "@curb/db/schema";
 import { env } from "@curb/env/server";
-import { storage } from "@curb/storage";
+import type { Storage } from "@curb/storage";
 import { generateText, Output } from "ai";
 import { and, asc, eq, gte, isNotNull, isNull, like, lte } from "drizzle-orm";
 import { z } from "zod";
@@ -65,8 +65,8 @@ async function extractReceiptsFromImage(base64: string) {
   return output;
 }
 
-function getImageUrlFromKey(storageKey: string): string {
-  const url = storage.getPublicUrl(storageKey);
+function getImageUrlFromKey(s: Storage, storageKey: string): string {
+  const url = s.getPublicUrl(storageKey);
   if (url) {
     return url;
   }
@@ -302,7 +302,7 @@ export const receiptsRouter = router({
       }
 
       if (receipt.storageKey) {
-        await storage.deleteObject(receipt.storageKey);
+        await ctx.storage.deleteObject(receipt.storageKey);
       }
 
       // Items are cascade-deleted via foreign key
@@ -371,7 +371,7 @@ export const receiptsRouter = router({
       let { imageUrl } = input;
 
       if (input.storageKey) {
-        imageUrl = getImageUrlFromKey(input.storageKey);
+        imageUrl = getImageUrlFromKey(ctx.storage, input.storageKey);
         base64 = await fetchImageAsBase64(imageUrl);
       } else if (imageUrl) {
         base64 = await fetchImageAsBase64(imageUrl);
@@ -416,7 +416,7 @@ export const receiptsRouter = router({
       }
 
       if (input.storageKey && receiptIds.length > 0) {
-        await storage.confirmObject(input.storageKey);
+        await ctx.storage.confirmObject(input.storageKey);
       }
 
       return { ...output, receiptIds };

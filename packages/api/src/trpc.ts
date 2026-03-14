@@ -1,8 +1,10 @@
 import type { Database } from "@curb/db";
+import type { Storage } from "@curb/storage";
 import { initTRPC, TRPCError } from "@trpc/server";
 
 export interface Context {
   db: Database;
+  storage: Storage;
   user: {
     id: string;
     name: string;
