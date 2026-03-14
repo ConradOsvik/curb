@@ -1,11 +1,13 @@
 import { expo } from "@better-auth/expo";
 import { passkey } from "@better-auth/passkey";
 import { db } from "@curb/db";
+import { user as userTable } from "@curb/db/schema";
 import { sendEmail } from "@curb/email";
 import OtpEmail from "@curb/email/templates/otp";
 import ResetPasswordEmail from "@curb/email/templates/reset-password";
 import VerificationEmail from "@curb/email/templates/verification";
 import { env } from "@curb/env/server";
+import { generateAndUploadAvatar, storage } from "@curb/storage";
 import {
   checkout,
   polar,
@@ -18,6 +20,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { emailOTP, twoFactor } from "better-auth/plugins";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
+import { eq } from "drizzle-orm";
 
 function getOtpSubject(type: string): string {
   if (type === "forget-password") {
@@ -104,29 +107,24 @@ export const auth = betterAuth({
     },
     user: {
       create: {
-        before: (user) => {
+        after: async (user) => {
           if (!user.image && user.name) {
-            const colors = [
-              "f44336",
-              "e91e63",
-              "9c27b0",
-              "673ab7",
-              "3f51b5",
-              "2196f3",
-              "03a9f4",
-              "00bcd4",
-              "009688",
-              "4caf50",
-              "ff9800",
-              "ff5722",
-              "795548",
-              "607d8b",
-            ];
-            const color = colors[Math.floor(Math.random() * colors.length)];
-            const image = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=${color}&color=fff&format=svg&bold=true&size=128`;
-            return Promise.resolve({ data: { ...user, image } });
+            try {
+              const image = await generateAndUploadAvatar(
+                user.name,
+                crypto.randomUUID()
+              );
+              await db
+                .update(userTable)
+                .set({ image })
+                .where(eq(userTable.id, user.id));
+            } catch (error) {
+              console.error(
+                "[avatar] Failed to generate avatar on signup:",
+                error
+              );
+            }
           }
-          return Promise.resolve({ data: user });
         },
       },
     },
@@ -232,6 +230,15 @@ export const auth = betterAuth({
           });
         } catch {
           // Customer may not exist in Polar
+        }
+
+        // Clean up S3 avatar
+        if (user.image) {
+          try {
+            await storage.deleteByUrl(user.image);
+          } catch {
+            // Non-fatal if S3 cleanup fails
+          }
         }
       },
       enabled: true,
