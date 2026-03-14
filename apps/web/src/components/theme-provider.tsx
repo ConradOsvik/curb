@@ -1,10 +1,11 @@
 import { createContext, use, useEffect, useMemo, useState } from "react";
 
+import { writeCookie } from "@/lib/cookie";
+
 export type ResolvedTheme = "dark" | "light";
 export type Theme = ResolvedTheme | "system";
 
 const COOKIE_KEY = "ui-theme";
-const COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 year
 
 interface ThemeProviderProps {
   children: React.ReactNode;
@@ -63,8 +64,7 @@ export function ThemeProvider({
     () => ({
       resolvedTheme,
       setTheme: (newTheme: Theme) => {
-        // oxlint-disable-next-line unicorn/no-document-cookie -- simple cookie set, no library needed
-        document.cookie = `${COOKIE_KEY}=${newTheme}; path=/; max-age=${COOKIE_MAX_AGE}; SameSite=Lax`;
+        writeCookie(COOKIE_KEY, newTheme);
         setThemeState(newTheme);
       },
       theme,

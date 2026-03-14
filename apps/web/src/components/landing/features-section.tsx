@@ -1,22 +1,26 @@
-import { FolderOpen, Receipt, TrendingUp } from "lucide-react";
+import {
+  ArrowTrendingUpIcon,
+  FolderOpenIcon,
+  ReceiptPercentIcon,
+} from "@heroicons/react/24/solid";
 
 const features = [
   {
     description:
       "Take a photo of any receipt and our AI instantly extracts merchant details, line items, and totals.",
-    icon: Receipt,
+    icon: ReceiptPercentIcon,
     title: "Scan & Extract",
   },
   {
     description:
       "Create folders, drag and drop receipts, and find what you need with powerful search and filters.",
-    icon: FolderOpen,
+    icon: FolderOpenIcon,
     title: "Organize",
   },
   {
     description:
       "See your spending patterns at a glance. Track expenses by category, date, and merchant.",
-    icon: TrendingUp,
+    icon: ArrowTrendingUpIcon,
     title: "Track",
   },
 ] as const;
