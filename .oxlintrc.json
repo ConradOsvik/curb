@@ -29,7 +29,8 @@
   "ignorePatterns": [
     "**/convex/_generated/**",
     "**/routeTree.gen.ts",
-    "apps/native/metro.config.js"
+    "apps/native/metro.config.js",
+    "**/scripts/**"
   ],
   "rules": {
     // ── Core ESLint ──────────────────────────────────────────────────
