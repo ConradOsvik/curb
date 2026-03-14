@@ -1,14 +1,13 @@
+import { CheckIcon, MagnifyingGlassIcon } from "@heroicons/react/24/solid";
 import { Command as CommandPrimitive } from "cmdk";
-import { SearchIcon, CheckIcon } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import * as React from "react";
+import { createPortal } from "react-dom";
 
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  HoverHighlightRoot,
+  useHoverHighlight,
+} from "@/components/ui/hover-highlight";
 import { InputGroup, InputGroupAddon } from "@/components/ui/input-group";
 import { cn } from "@/lib/utils";
 
@@ -29,35 +28,124 @@ function Command({
 }
 
 function CommandDialog({
+  open,
+  onOpenChange,
   title = "Command Palette",
-  description = "Search for a command to run...",
   children,
   className,
-  showCloseButton = false,
-  ...props
-}: Omit<React.ComponentProps<typeof Dialog>, "children"> & {
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   title?: string;
-  description?: string;
   className?: string;
-  showCloseButton?: boolean;
   children: React.ReactNode;
 }) {
-  return (
-    <Dialog {...props}>
-      <DialogHeader className="sr-only">
-        <DialogTitle>{title}</DialogTitle>
-        <DialogDescription>{description}</DialogDescription>
-      </DialogHeader>
-      <DialogContent
-        className={cn(
-          "top-1/3 translate-y-0 overflow-hidden rounded-xl! p-0",
-          className
-        )}
-        showCloseButton={showCloseButton}
-      >
-        {children}
-      </DialogContent>
-    </Dialog>
+  const popupRef = React.useRef<HTMLDivElement>(null);
+  const previousFocusRef = React.useRef<HTMLElement | null>(null);
+
+  // Save focus on open, restore on close
+  React.useEffect(() => {
+    if (open) {
+      previousFocusRef.current = document.activeElement as HTMLElement | null;
+    } else if (previousFocusRef.current) {
+      previousFocusRef.current.focus();
+      previousFocusRef.current = null;
+    }
+  }, [open]);
+
+  // Auto-focus the input when the popup mounts
+  const handleAnimationComplete = React.useCallback(() => {
+    const input = popupRef.current?.querySelector<HTMLElement>(
+      "[data-slot='command-input']"
+    );
+    input?.focus();
+  }, []);
+
+  // Escape to close + focus trap
+  React.useEffect(() => {
+    if (!open) {
+      return;
+    }
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onOpenChange(false);
+        return;
+      }
+
+      // Focus trap — Tab cycles within the popup
+      if (e.key === "Tab") {
+        const popup = popupRef.current;
+        if (!popup) {
+          return;
+        }
+        const focusableList = [
+          ...popup.querySelectorAll<HTMLElement>(
+            'input, button, [tabindex]:not([tabindex="-1"])'
+          ),
+        ];
+        if (focusableList.length === 0) {
+          return;
+        }
+        const [first] = focusableList;
+        const last = focusableList.at(-1);
+
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last?.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        } else if (!popup.contains(document.activeElement)) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open, onOpenChange]);
+
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  return createPortal(
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
+            key="cmd-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.1 }}
+            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs"
+            onClick={() => onOpenChange(false)}
+            aria-hidden="true"
+          />
+          <motion.div
+            ref={popupRef}
+            key="cmd-popup"
+            role="dialog"
+            aria-modal="true"
+            aria-label={title}
+            initial={{ filter: "blur(4px)", opacity: 0, scale: 0.95 }}
+            animate={{ filter: "blur(0px)", opacity: 1, scale: 1 }}
+            exit={{ filter: "blur(4px)", opacity: 0, scale: 0.95 }}
+            transition={{ bounce: 0, duration: 0.2, type: "spring" }}
+            onAnimationComplete={handleAnimationComplete}
+            className={cn(
+              "fixed top-1/3 left-1/2 z-50 w-full max-w-[calc(100%-2rem)] -translate-x-1/2 overflow-hidden rounded-xl p-0 bg-background text-sm ring-1 ring-foreground/10 outline-none sm:max-w-md",
+              className
+            )}
+          >
+            {children}
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>,
+    document.body
   );
 }
 
@@ -77,7 +165,7 @@ function CommandInput({
           {...props}
         />
         <InputGroupAddon>
-          <SearchIcon className="size-4 shrink-0 opacity-50" />
+          <MagnifyingGlassIcon className="size-4 shrink-0 opacity-50" />
         </InputGroupAddon>
       </InputGroup>
     </div>
@@ -86,6 +174,7 @@ function CommandInput({
 
 function CommandList({
   className,
+  children,
   ...props
 }: React.ComponentProps<typeof CommandPrimitive.List>) {
   return (
@@ -96,7 +185,11 @@ function CommandList({
         className
       )}
       {...props}
-    />
+    >
+      <HoverHighlightRoot highlightClassName="bg-accent/70 dark:bg-accent/50 rounded-sm">
+        {children}
+      </HoverHighlightRoot>
+    </CommandPrimitive.List>
   );
 }
 
@@ -147,13 +240,22 @@ function CommandItem({
   children,
   ...props
 }: React.ComponentProps<typeof CommandPrimitive.Item>) {
+  const ctx = useHoverHighlight();
+  const itemRef = React.useRef<HTMLDivElement>(null);
+
   return (
     <CommandPrimitive.Item
+      ref={itemRef}
       data-slot="command-item"
       className={cn(
-        "group/command-item relative flex cursor-default items-center gap-2 rounded-sm px-2 py-2 text-sm outline-hidden select-none in-data-[slot=dialog-content]:rounded-lg! data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 data-selected:bg-accent/70 dark:data-selected:bg-accent/50 data-selected:text-accent-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 data-selected:**:[svg]:text-accent-foreground",
+        "group/command-item relative flex cursor-default items-center gap-2 rounded-sm px-2 py-2 text-sm outline-hidden select-none in-data-[slot=dialog-content]:rounded-lg! data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 data-selected:text-accent-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 data-selected:**:[svg]:text-accent-foreground",
         className
       )}
+      onMouseEnter={() => {
+        if (itemRef.current && ctx) {
+          ctx.onItemEnter(itemRef.current);
+        }
+      }}
       {...props}
     >
       {children}
