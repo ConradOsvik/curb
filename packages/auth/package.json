@@ -17,7 +17,9 @@
     "@curb/db": "workspace:*",
     "@curb/email": "workspace:*",
     "@curb/env": "workspace:*",
-    "better-auth": "catalog:"
+    "@curb/storage": "workspace:*",
+    "better-auth": "catalog:",
+    "drizzle-orm": "^0.38.0"
   },
   "devDependencies": {
     "@curb/config": "workspace:*",

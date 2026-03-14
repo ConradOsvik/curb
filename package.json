@@ -33,6 +33,8 @@
     "@curb/env": "workspace:*",
     "@polar-sh/better-auth": "^1.8.2",
     "@polar-sh/sdk": "^0.46.3",
+    "react-spreadsheet": "^0.10.1",
+    "scheduler": "^0.27.0",
     "zod": "catalog:"
   },
   "devDependencies": {
@@ -43,8 +45,7 @@
     "oxlint": "latest",
     "oxlint-tsgolint": "^0.16.0",
     "turbo": "^2.6.3",
-    "typescript": "catalog:",
-    "web": "workspace:*"
+    "typescript": "catalog:"
   },
   "packageManager": "bun@1.3.9",
   "catalog": {
