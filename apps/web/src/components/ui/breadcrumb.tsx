@@ -1,6 +1,9 @@
 import { mergeProps } from "@base-ui/react/merge-props";
 import { useRender } from "@base-ui/react/use-render";
-import { ChevronRightIcon, MoreHorizontalIcon } from "lucide-react";
+import {
+  ChevronRightIcon,
+  EllipsisHorizontalIcon,
+} from "@heroicons/react/24/solid";
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
@@ -104,7 +107,7 @@ function BreadcrumbEllipsis({
       )}
       {...props}
     >
-      <MoreHorizontalIcon />
+      <EllipsisHorizontalIcon />
       <span className="sr-only">More</span>
     </span>
   );

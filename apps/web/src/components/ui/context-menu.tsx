@@ -1,7 +1,11 @@
 import { ContextMenu as ContextMenuPrimitive } from "@base-ui/react/context-menu";
-import { ChevronRightIcon, CheckIcon } from "lucide-react";
+import { CheckIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import * as React from "react";
 
+import {
+  HoverHighlightRoot,
+  useHoverHighlight,
+} from "@/components/ui/hover-highlight";
 import { cn } from "@/lib/utils";
 
 function ContextMenu({ ...props }: ContextMenuPrimitive.Root.Props) {
@@ -33,6 +37,7 @@ function ContextMenuContent({
   alignOffset = 4,
   side = "right",
   sideOffset = 0,
+  children,
   ...props
 }: ContextMenuPrimitive.Popup.Props &
   Pick<
@@ -55,7 +60,11 @@ function ContextMenuContent({
             className
           )}
           {...props}
-        />
+        >
+          <HoverHighlightRoot highlightClassName="bg-accent/70 dark:bg-accent/50 rounded-sm">
+            {children}
+          </HoverHighlightRoot>
+        </ContextMenuPrimitive.Popup>
       </ContextMenuPrimitive.Positioner>
     </ContextMenuPrimitive.Portal>
   );
@@ -96,13 +105,22 @@ function ContextMenuItem({
   inset?: boolean;
   variant?: "default" | "destructive";
 }) {
+  const ctx = useHoverHighlight();
+  const itemRef = React.useRef<HTMLElement>(null);
+
   return (
     <ContextMenuPrimitive.Item
+      ref={itemRef}
       data-slot="context-menu-item"
       data-inset={inset}
       data-variant={variant}
+      onMouseEnter={() => {
+        if (itemRef.current && ctx) {
+          ctx.onItemEnter(itemRef.current);
+        }
+      }}
       className={cn(
-        "focus:bg-accent/70 dark:focus:bg-accent/50 focus:text-accent-foreground data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 dark:data-[variant=destructive]:focus:bg-destructive/20 data-[variant=destructive]:focus:text-destructive data-[variant=destructive]:*:[svg]:text-destructive focus:*:[svg]:text-accent-foreground gap-2 rounded-sm px-3 py-2 text-sm [&_svg:not([class*='size-'])]:size-4 group/context-menu-item relative flex cursor-default items-center outline-hidden select-none data-disabled:pointer-events-none data-disabled:opacity-50 data-[inset]:pl-8 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+        "focus:text-accent-foreground data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 dark:data-[variant=destructive]:focus:bg-destructive/20 data-[variant=destructive]:focus:text-destructive data-[variant=destructive]:*:[svg]:text-destructive focus:*:[svg]:text-accent-foreground gap-2 rounded-sm px-3 py-2 text-sm [&_svg:not([class*='size-'])]:size-4 group/context-menu-item relative flex cursor-default items-center outline-hidden select-none data-disabled:pointer-events-none data-disabled:opacity-50 data-[inset]:pl-8 [&_svg]:pointer-events-none [&_svg]:shrink-0",
         className
       )}
       {...props}
@@ -124,12 +142,21 @@ function ContextMenuSubTrigger({
 }: ContextMenuPrimitive.SubmenuTrigger.Props & {
   inset?: boolean;
 }) {
+  const ctx = useHoverHighlight();
+  const itemRef = React.useRef<HTMLElement>(null);
+
   return (
     <ContextMenuPrimitive.SubmenuTrigger
+      ref={itemRef}
       data-slot="context-menu-sub-trigger"
       data-inset={inset}
+      onMouseEnter={() => {
+        if (itemRef.current && ctx) {
+          ctx.onItemEnter(itemRef.current);
+        }
+      }}
       className={cn(
-        "focus:bg-accent/70 dark:focus:bg-accent/50 focus:text-accent-foreground data-open:bg-accent/70 dark:focus:bg-accent/50 data-open:text-accent-foreground rounded-sm px-3 py-2 text-sm [&_svg:not([class*='size-'])]:size-4 flex cursor-default items-center outline-hidden select-none data-[inset]:pl-8 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+        "focus:text-accent-foreground data-open:text-accent-foreground rounded-sm px-3 py-2 text-sm [&_svg:not([class*='size-'])]:size-4 flex cursor-default items-center outline-hidden select-none data-[inset]:pl-8 [&_svg]:pointer-events-none [&_svg]:shrink-0",
         className
       )}
       {...props}
@@ -159,11 +186,20 @@ function ContextMenuCheckboxItem({
   checked,
   ...props
 }: ContextMenuPrimitive.CheckboxItem.Props) {
+  const ctx = useHoverHighlight();
+  const itemRef = React.useRef<HTMLElement>(null);
+
   return (
     <ContextMenuPrimitive.CheckboxItem
+      ref={itemRef}
       data-slot="context-menu-checkbox-item"
+      onMouseEnter={() => {
+        if (itemRef.current && ctx) {
+          ctx.onItemEnter(itemRef.current);
+        }
+      }}
       className={cn(
-        "focus:bg-accent/70 dark:focus:bg-accent/50 focus:text-accent-foreground gap-2 rounded-sm py-2 pr-8 pl-3 text-sm [&_svg:not([class*='size-'])]:size-4 relative flex cursor-default items-center outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+        "focus:text-accent-foreground gap-2 rounded-sm py-2 pr-8 pl-3 text-sm [&_svg:not([class*='size-'])]:size-4 relative flex cursor-default items-center outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
         className
       )}
       checked={checked}
@@ -195,11 +231,20 @@ function ContextMenuRadioItem({
   children,
   ...props
 }: ContextMenuPrimitive.RadioItem.Props) {
+  const ctx = useHoverHighlight();
+  const itemRef = React.useRef<HTMLElement>(null);
+
   return (
     <ContextMenuPrimitive.RadioItem
+      ref={itemRef}
       data-slot="context-menu-radio-item"
+      onMouseEnter={() => {
+        if (itemRef.current && ctx) {
+          ctx.onItemEnter(itemRef.current);
+        }
+      }}
       className={cn(
-        "focus:bg-accent/70 dark:focus:bg-accent/50 focus:text-accent-foreground gap-2 rounded-sm py-2 pr-8 pl-3 text-sm [&_svg:not([class*='size-'])]:size-4 relative flex cursor-default items-center outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+        "focus:text-accent-foreground gap-2 rounded-sm py-2 pr-8 pl-3 text-sm [&_svg:not([class*='size-'])]:size-4 relative flex cursor-default items-center outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
         className
       )}
       {...props}

@@ -1,9 +1,13 @@
 "use client";
 
 import { Menu as MenuPrimitive } from "@base-ui/react/menu";
-import { ChevronRightIcon, CheckIcon } from "lucide-react";
+import { CheckIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import * as React from "react";
 
+import {
+  HoverHighlightRoot,
+  useHoverHighlight,
+} from "@/components/ui/hover-highlight";
 import { cn } from "@/lib/utils";
 
 function DropdownMenu({ ...props }: MenuPrimitive.Root.Props) {
@@ -24,6 +28,7 @@ function DropdownMenuContent({
   side = "bottom",
   sideOffset = 4,
   className,
+  children,
   ...props
 }: MenuPrimitive.Popup.Props &
   Pick<
@@ -46,7 +51,11 @@ function DropdownMenuContent({
             className
           )}
           {...props}
-        />
+        >
+          <HoverHighlightRoot highlightClassName="bg-accent/70 dark:bg-accent/50 rounded-sm">
+            {children}
+          </HoverHighlightRoot>
+        </MenuPrimitive.Popup>
       </MenuPrimitive.Positioner>
     </MenuPrimitive.Portal>
   );
@@ -85,13 +94,22 @@ function DropdownMenuItem({
   inset?: boolean;
   variant?: "default" | "destructive";
 }) {
+  const ctx = useHoverHighlight();
+  const itemRef = React.useRef<HTMLElement>(null);
+
   return (
     <MenuPrimitive.Item
+      ref={itemRef}
       data-slot="dropdown-menu-item"
       data-inset={inset}
       data-variant={variant}
+      onMouseEnter={() => {
+        if (itemRef.current && ctx) {
+          ctx.onItemEnter(itemRef.current);
+        }
+      }}
       className={cn(
-        "focus:bg-accent/70 dark:focus:bg-accent/50 focus:text-accent-foreground data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 dark:data-[variant=destructive]:focus:bg-destructive/20 data-[variant=destructive]:focus:text-destructive data-[variant=destructive]:*:[svg]:text-destructive not-data-[variant=destructive]:focus:**:text-accent-foreground gap-2 rounded-sm px-3 py-2 text-sm [&_svg:not([class*='size-'])]:size-4 group/dropdown-menu-item relative flex cursor-pointer items-center outline-hidden select-none data-disabled:pointer-events-none data-disabled:opacity-50 data-[inset]:pl-8 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+        "focus:text-accent-foreground data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 dark:data-[variant=destructive]:focus:bg-destructive/20 data-[variant=destructive]:focus:text-destructive data-[variant=destructive]:*:[svg]:text-destructive not-data-[variant=destructive]:focus:**:text-accent-foreground gap-2 rounded-sm px-3 py-2 text-sm [&_svg:not([class*='size-'])]:size-4 group/dropdown-menu-item relative flex cursor-pointer items-center outline-hidden select-none data-disabled:pointer-events-none data-disabled:opacity-50 data-[inset]:pl-8 [&_svg]:pointer-events-none [&_svg]:shrink-0",
         className
       )}
       {...props}
@@ -111,12 +129,21 @@ function DropdownMenuSubTrigger({
 }: MenuPrimitive.SubmenuTrigger.Props & {
   inset?: boolean;
 }) {
+  const ctx = useHoverHighlight();
+  const itemRef = React.useRef<HTMLElement>(null);
+
   return (
     <MenuPrimitive.SubmenuTrigger
+      ref={itemRef}
       data-slot="dropdown-menu-sub-trigger"
       data-inset={inset}
+      onMouseEnter={() => {
+        if (itemRef.current && ctx) {
+          ctx.onItemEnter(itemRef.current);
+        }
+      }}
       className={cn(
-        "focus:bg-accent/70 dark:focus:bg-accent/50 focus:text-accent-foreground data-open:bg-accent/70 dark:focus:bg-accent/50 data-open:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground gap-2 rounded-sm px-3 py-2 text-sm [&_svg:not([class*='size-'])]:size-4 data-popup-open:bg-accent/70 dark:focus:bg-accent/50 data-popup-open:text-accent-foreground flex cursor-pointer items-center outline-hidden select-none data-[inset]:pl-8 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+        "focus:text-accent-foreground data-open:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground gap-2 rounded-sm px-3 py-2 text-sm [&_svg:not([class*='size-'])]:size-4 data-popup-open:text-accent-foreground flex cursor-pointer items-center outline-hidden select-none data-[inset]:pl-8 [&_svg]:pointer-events-none [&_svg]:shrink-0",
         className
       )}
       {...props}
@@ -157,11 +184,20 @@ function DropdownMenuCheckboxItem({
   checked,
   ...props
 }: MenuPrimitive.CheckboxItem.Props) {
+  const ctx = useHoverHighlight();
+  const itemRef = React.useRef<HTMLElement>(null);
+
   return (
     <MenuPrimitive.CheckboxItem
+      ref={itemRef}
       data-slot="dropdown-menu-checkbox-item"
+      onMouseEnter={() => {
+        if (itemRef.current && ctx) {
+          ctx.onItemEnter(itemRef.current);
+        }
+      }}
       className={cn(
-        "focus:bg-accent/70 dark:focus:bg-accent/50 focus:text-accent-foreground focus:**:text-accent-foreground gap-2 rounded-sm py-2 pr-8 pl-3 text-sm [&_svg:not([class*='size-'])]:size-4 relative flex cursor-pointer items-center outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+        "focus:text-accent-foreground focus:**:text-accent-foreground gap-2 rounded-sm py-2 pr-8 pl-3 text-sm [&_svg:not([class*='size-'])]:size-4 relative flex cursor-pointer items-center outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
         className
       )}
       checked={checked}
@@ -194,11 +230,20 @@ function DropdownMenuRadioItem({
   children,
   ...props
 }: MenuPrimitive.RadioItem.Props) {
+  const ctx = useHoverHighlight();
+  const itemRef = React.useRef<HTMLElement>(null);
+
   return (
     <MenuPrimitive.RadioItem
+      ref={itemRef}
       data-slot="dropdown-menu-radio-item"
+      onMouseEnter={() => {
+        if (itemRef.current && ctx) {
+          ctx.onItemEnter(itemRef.current);
+        }
+      }}
       className={cn(
-        "focus:bg-accent/70 dark:focus:bg-accent/50 focus:text-accent-foreground focus:**:text-accent-foreground gap-2 rounded-sm py-2 pr-8 pl-3 text-sm [&_svg:not([class*='size-'])]:size-4 relative flex cursor-pointer items-center outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+        "focus:text-accent-foreground focus:**:text-accent-foreground gap-2 rounded-sm py-2 pr-8 pl-3 text-sm [&_svg:not([class*='size-'])]:size-4 relative flex cursor-pointer items-center outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
         className
       )}
       {...props}

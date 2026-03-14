@@ -1,7 +1,15 @@
 import { Select as SelectPrimitive } from "@base-ui/react/select";
-import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react";
+import {
+  CheckIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+} from "@heroicons/react/24/solid";
 import * as React from "react";
 
+import {
+  ActiveHoverHighlightRoot,
+  useActiveHoverHighlight,
+} from "@/components/ui/hover-highlight";
 import { cn } from "@/lib/utils";
 
 const Select = SelectPrimitive.Root;
@@ -88,7 +96,9 @@ function SelectContent({
           {...props}
         >
           <SelectScrollUpButton />
-          <SelectPrimitive.List>{children}</SelectPrimitive.List>
+          <ActiveHoverHighlightRoot highlightClassName="bg-accent/70 dark:bg-accent/50 rounded-sm">
+            <SelectPrimitive.List>{children}</SelectPrimitive.List>
+          </ActiveHoverHighlightRoot>
           <SelectScrollDownButton />
         </SelectPrimitive.Popup>
       </SelectPrimitive.Positioner>
@@ -114,11 +124,46 @@ function SelectItem({
   children,
   ...props
 }: SelectPrimitive.Item.Props) {
+  const ctx = useActiveHoverHighlight();
+  const itemRef = React.useRef<HTMLElement>(null);
+
+  React.useEffect(() => {
+    const el = itemRef.current;
+    if (!el || !ctx) {
+      return;
+    }
+
+    if (Object.hasOwn(el.dataset, "selected")) {
+      ctx.registerActive(el);
+    }
+
+    const observer = new MutationObserver(() => {
+      if (Object.hasOwn(el.dataset, "selected")) {
+        ctx.registerActive(el);
+      }
+    });
+
+    observer.observe(el, {
+      attributeFilter: ["data-selected"],
+      attributes: true,
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [ctx]);
+
   return (
     <SelectPrimitive.Item
+      ref={itemRef}
       data-slot="select-item"
+      onMouseEnter={() => {
+        if (itemRef.current && ctx) {
+          ctx.onItemHover(itemRef.current);
+        }
+      }}
       className={cn(
-        "focus:bg-accent/70 dark:focus:bg-accent/50 focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground gap-2 rounded-sm py-2 pr-8 pl-3 text-sm [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2 relative flex w-full cursor-pointer items-center outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+        "focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground gap-2 rounded-sm py-2 pr-8 pl-3 text-sm [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2 relative flex w-full cursor-pointer items-center outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
         className
       )}
       {...props}

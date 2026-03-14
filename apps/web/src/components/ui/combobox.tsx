@@ -1,10 +1,18 @@
 "use client";
 
 import { Combobox as ComboboxPrimitive } from "@base-ui/react";
-import { ChevronDownIcon, XIcon, CheckIcon } from "lucide-react";
+import {
+  CheckIcon,
+  ChevronDownIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/solid";
 import * as React from "react";
 
 import { Button } from "@/components/ui/button";
+import {
+  ActiveHoverHighlightRoot,
+  useActiveHoverHighlight,
+} from "@/components/ui/hover-highlight";
 import {
   InputGroup,
   InputGroupAddon,
@@ -44,7 +52,7 @@ function ComboboxClear({ className, ...props }: ComboboxPrimitive.Clear.Props) {
       className={cn(className)}
       {...props}
     >
-      <XIcon className="pointer-events-none" />
+      <XMarkIcon className="pointer-events-none" />
     </ComboboxPrimitive.Clear>
   );
 }
@@ -121,7 +129,11 @@ function ComboboxContent({
   );
 }
 
-function ComboboxList({ className, ...props }: ComboboxPrimitive.List.Props) {
+function ComboboxList({
+  className,
+  children,
+  ...props
+}: ComboboxPrimitive.List.Props) {
   return (
     <ComboboxPrimitive.List
       data-slot="combobox-list"
@@ -130,7 +142,11 @@ function ComboboxList({ className, ...props }: ComboboxPrimitive.List.Props) {
         className
       )}
       {...props}
-    />
+    >
+      <ActiveHoverHighlightRoot highlightClassName="bg-accent/70 dark:bg-accent/50 rounded-sm">
+        {children as React.ReactNode}
+      </ActiveHoverHighlightRoot>
+    </ComboboxPrimitive.List>
   );
 }
 
@@ -139,13 +155,48 @@ function ComboboxItem({
   children,
   ...props
 }: ComboboxPrimitive.Item.Props) {
+  const ctx = useActiveHoverHighlight();
+  const itemRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const el = itemRef.current;
+    if (!el || !ctx) {
+      return;
+    }
+
+    if (Object.hasOwn(el.dataset, "selected")) {
+      ctx.registerActive(el);
+    }
+
+    const observer = new MutationObserver(() => {
+      if (Object.hasOwn(el.dataset, "selected")) {
+        ctx.registerActive(el);
+      }
+    });
+
+    observer.observe(el, {
+      attributeFilter: ["data-selected"],
+      attributes: true,
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [ctx]);
+
   return (
     <ComboboxPrimitive.Item
+      ref={itemRef}
       data-slot="combobox-item"
       className={cn(
-        "data-highlighted:bg-accent/70 dark:data-highlighted:bg-accent/50 data-highlighted:text-accent-foreground not-data-[variant=destructive]:data-highlighted:**:text-accent-foreground gap-2 rounded-sm py-2 pr-8 pl-3 text-sm [&_svg:not([class*='size-'])]:size-4 relative flex w-full cursor-pointer items-center outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+        "data-highlighted:text-accent-foreground not-data-[variant=destructive]:data-highlighted:**:text-accent-foreground gap-2 rounded-sm py-2 pr-8 pl-3 text-sm [&_svg:not([class*='size-'])]:size-4 relative flex w-full cursor-pointer items-center outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
         className
       )}
+      onMouseEnter={() => {
+        if (itemRef.current && ctx) {
+          ctx.onItemHover(itemRef.current);
+        }
+      }}
       {...props}
     >
       {children}
@@ -256,7 +307,7 @@ function ComboboxChip({
           className="-ml-1 opacity-50 hover:opacity-100"
           data-slot="combobox-chip-remove"
         >
-          <XIcon className="pointer-events-none" />
+          <XMarkIcon className="pointer-events-none" />
         </ComboboxPrimitive.ChipRemove>
       )}
     </ComboboxPrimitive.Chip>
