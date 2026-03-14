@@ -12,3 +12,5 @@ export type RouterInput = inferRouterInputs<AppRouter>;
 export type Folder = RouterOutput["folders"]["listAll"][number];
 export type ReceiptWithItems = NonNullable<RouterOutput["receipts"]["get"]>;
 export type ReceiptItem = ReceiptWithItems["items"][number];
+export type SheetWithData = NonNullable<RouterOutput["sheets"]["get"]>;
+export type SheetListItem = RouterOutput["sheets"]["list"][number];
